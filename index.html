@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b4f8b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="아리랑2">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>대주아리랑2 운항 대시보드</title>
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --primary: #0b4f8b;
+    --primary-light: #1c6fb8;
+    --accent: #ff8c00;
+    --text: #1d2a3a;
+    --muted: #6b7785;
+    --border: #e4e8ee;
+    --ok: #1f9d55;
+    --warn: #e0a800;
+    --danger: #d63333;
+    --shadow: 0 2px 8px rgba(15, 35, 70, 0.08);
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Segoe UI', 'Malgun Gothic', '맑은 고딕', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+  header .sub { opacity: 0.9; font-size: 12px; }
+  .top-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .top-actions button {
+    background: rgba(255,255,255,0.18);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.35);
+    padding: 6px 11px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .top-actions button:hover, .top-actions button:active { background: rgba(255,255,255,0.32); }
+
+  /* Quick edit bar */
+  .quick-bar {
+    background: white;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+    align-items: center;
+  }
+  .quick-bar label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+    margin-right: -4px;
+  }
+  .quick-bar input {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 12px;
+    width: 110px;
+    font-family: inherit;
+  }
+  .quick-bar button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  main {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 14px;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(12, 1fr);
+  }
+  .card {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .card h2 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+  }
+  .card h2 .badge {
+    font-size: 10px;
+    background: var(--accent);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: normal;
+    margin-left: auto;
+  }
+  .card h2 .mini-btn {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--primary-light);
+    color: var(--primary-light);
+    padding: 2px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .col-12 { grid-column: span 12; }
+  .col-8 { grid-column: span 8; }
+  .col-6 { grid-column: span 6; }
+  .col-4 { grid-column: span 4; }
+  @media (max-width: 900px) {
+    .col-8, .col-6, .col-4 { grid-column: span 12; }
+    header h1 { font-size: 16px; }
+    main { padding: 10px; gap: 10px; }
+  }
+
+  /* Voyage status */
+  .voyage-status {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 12px;
+    align-items: center;
+  }
+  @media (max-width: 600px) {
+    .voyage-status { grid-template-columns: 1fr; }
+    .port-arrow { transform: rotate(90deg); padding: 4px 0; }
+  }
+  .port-block {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid var(--border);
+  }
+  .port-block h3 { margin: 0 0 6px 0; font-size: 15px; color: var(--primary); }
+  .port-block .time-row {
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    gap: 4px 8px;
+    font-size: 13px;
+  }
+  .port-block .time-row .lbl { color: var(--muted); font-weight: 600; }
+  .port-arrow { font-size: 26px; color: var(--primary-light); text-align: center; }
+  .countdown {
+    background: var(--primary);
+    color: white;
+    border-radius: 6px;
+    padding: 2px 7px;
+    display: inline-block;
+    font-size: 10px;
+    margin-left: 5px;
+    font-weight: 600;
+  }
+  .countdown.past { background: var(--muted); }
+  .countdown.soon { background: var(--accent); }
+  .countdown.urgent { background: var(--danger); }
+
+  /* Bunker */
+  .bunker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .bunker-cell {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+  }
+  .bunker-cell .num { font-size: 22px; font-weight: 700; color: var(--primary); }
+  .bunker-cell .unit { font-size: 11px; color: var(--muted); margin-left: 2px; }
+  .bunker-cell .label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .bunker-cell.warn .num { color: var(--warn); }
+  .bunker-cell.danger { background: #fff5f5; border-color: var(--danger); }
+  .bunker-cell.danger .num { color: var(--danger); }
+  .bunker-cell .alert-tag { display: block; font-size: 10px; margin-top: 2px; font-weight: 600; }
+  .draft-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; font-size: 12px; }
+  .draft-row > div { background: #f8fafc; border-radius: 6px; padding: 6px; text-align: center; border: 1px solid var(--border); }
+  .draft-row .lbl { color: var(--muted); font-size: 10px; }
+  .position-info { margin-top: 8px; font-size: 12px; color: var(--muted); text-align: center; padding: 6px; background: #f8fafc; border-radius: 6px; }
+
+  /* Weather */
+  .weather-block { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .weather-card { background: linear-gradient(135deg, #eef5fc, #ffffff); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+  .weather-card h3 { margin: 0 0 6px 0; font-size: 13px; color: var(--primary); }
+  .weather-temp { font-size: 26px; font-weight: 700; color: var(--primary); }
+  .weather-icon { font-size: 28px; margin-right: 6px; }
+  .weather-detail { font-size: 11px; color: var(--muted); margin-top: 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+  .weather-detail span strong { color: var(--text); }
+  .weather-loading { color: var(--muted); font-style: italic; font-size: 12px; }
+  .weather-error { color: var(--danger); font-size: 11px; margin-top: 4px; }
+  .weather-links { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .weather-links a { font-size: 10px; color: var(--primary-light); text-decoration: none; border: 1px solid var(--primary-light); padding: 2px 7px; border-radius: 4px; }
+  .weather-links a:hover { background: var(--primary-light); color: white; }
+
+  /* Notes */
+  .notes-box {
+    background: #fff8e1;
+    border: 1px solid #ffd591;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: #5a4500;
+    margin-top: 8px;
+  }
+  .notes-box:empty { display: none; }
+
+  /* Cargo progress */
+  .cargo-progress { margin-top: 4px; }
+  .cargo-progress .bar-wrap { background: #e7ebf1; border-radius: 8px; height: 28px; position: relative; overflow: hidden; }
+  .cargo-progress .bar-fill {
+    background: linear-gradient(90deg, var(--primary-light), var(--primary));
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .cargo-progress .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 12px;
+  }
+  .cargo-progress .stats > div { background: #f8fafc; padding: 8px; border-radius: 6px; text-align: center; border: 1px solid var(--border); }
+  .cargo-progress .stats .lbl { color: var(--muted); font-size: 10px; }
+  .cargo-progress .stats .val { font-weight: 700; color: var(--primary); margin-top: 2px; }
+  .cargo-type-switch { display: flex; gap: 4px; margin-bottom: 10px; }
+  .cargo-type-switch button {
+    flex: 1;
+    padding: 5px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+  }
+  .cargo-type-switch button.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  /* Work log */
+  .work-log { font-size: 12px; }
+  .work-log-item {
+    border-left: 3px solid var(--primary-light);
+    padding: 6px 10px;
+    margin-bottom: 6px;
+    background: #f8fafc;
+    border-radius: 0 6px 6px 0;
+  }
+  .work-log-item.no-work { border-color: var(--warn); background: #fffbf0; }
+  .work-log-item.stopped { border-color: var(--danger); background: #fff5f5; }
+  .work-log-item .top-line { display: flex; justify-content: space-between; align-items: center; }
+  .work-log-item .date { font-weight: 600; color: var(--primary); }
+  .work-log-item .type-tag { font-size: 10px; padding: 1px 6px; border-radius: 8px; background: var(--primary-light); color: white; }
+  .work-log-item .type-tag.no { background: var(--warn); }
+  .work-log-item .type-tag.stop { background: var(--danger); }
+  .work-log-item .content { color: var(--muted); margin-top: 3px; }
+  .work-log-item .del { background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 11px; }
+  .work-log-form { display: grid; grid-template-columns: 110px 110px 1fr auto; gap: 5px; margin-bottom: 10px; }
+  .work-log-form input, .work-log-form select {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-family: inherit;
+  }
+  .work-log-form button { background: var(--primary); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+  @media (max-width: 600px) { .work-log-form { grid-template-columns: 1fr 1fr; } .work-log-form button { grid-column: span 2; } }
+
+  /* Restrictions */
+  .restriction-grid { display: grid; gap: 6px; }
+  .restriction-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 10px;
+    background: #f8fafc;
+    border-radius: 6px;
+    font-size: 12px;
+    border-left: 3px solid var(--ok);
+  }
+  .restriction-row.restricted { border-left-color: var(--danger); background: #fff5f5; }
+  .restriction-row .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ok); }
+  .restriction-row.restricted .status-dot { background: var(--danger); }
+  .restriction-row .name { font-weight: 600; }
+  .restriction-row .note { color: var(--muted); font-size: 11px; }
+  .restriction-row button { background: transparent; border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; }
+
+  /* Next work */
+  .next-work-item {
+    background: linear-gradient(135deg, #fff8ed, white);
+    border: 1px solid #ffd591;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+  }
+  .next-work-item .when { font-weight: 700; color: var(--accent); font-size: 13px; }
+  .next-work-item .what { font-size: 12px; margin-top: 2px; }
+
+  /* External links */
+  .link-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+  .link-list a {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 11px;
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .link-list a:hover { background: var(--primary); color: white; border-color: var(--primary); }
+  .link-list a .ic { font-size: 16px; }
+
+  /* History */
+  .history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .history-table th, .history-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  .history-table th { background: #f8fafc; color: var(--muted); font-weight: 600; font-size: 11px; }
+  .no-history { color: var(--muted); font-style: italic; text-align: center; padding: 14px; font-size: 12px; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(20, 30, 50, 0.6); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: 10px; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; padding: 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+  .modal h2 { margin: 0 0 14px 0; color: var(--primary); font-size: 17px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-grid .full { grid-column: span 2; }
+  .form-grid label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; margin-bottom: 3px; }
+  .form-grid input, .form-grid textarea, .form-grid select {
+    width: 100%;
+    padding: 7px 9px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .form-grid input:focus, .form-grid textarea:focus, .form-grid select:focus {
+    outline: none;
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 2px rgba(28, 111, 184, 0.15);
+  }
+  .form-section { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .form-section h3 { margin: 0 0 10px 0; font-size: 13px; color: var(--primary); }
+  .modal-actions { margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+  .btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: 500; font-family: inherit; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-secondary { background: #e7ebf1; color: var(--text); }
+  .btn-danger { background: var(--danger); color: white; }
+
+  footer { text-align: center; padding: 16px; color: var(--muted); font-size: 11px; }
+  .last-updated { text-align: right; font-size: 10px; color: var(--muted); padding: 4px 16px; }
+
+  /* Sync status */
+  .sync-banner {
+    background: #e8f5e9;
+    border-bottom: 1px solid #c8e6c9;
+    padding: 6px 16px;
+    font-size: 11px;
+    color: #2e7d32;
+    text-align: center;
+  }
+  .sync-banner.warn { background: #fff8e1; border-color: #ffe082; color: #5a4500; }
+  .sync-banner.error { background: #ffebee; border-color: #ffcdd2; color: #c62828; }
+  .sync-banner:empty { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>⚓ 대주아리랑2</h1>
+    <div class="sub" id="vesselSubtitle">동해 → 당진(장안서) · 석회석 30,000MT</div>
+  </div>
+  <div class="top-actions">
+    <button onclick="openEditModal()">📝 수정</button>
+    <button onclick="completeVoyage()">✅ 항차 완료</button>
+    <button onclick="refreshWeather()">🔄 날씨</button>
+    <button onclick="fetchRemoteData(true)" title="data.json에서 즉시 가져오기">⬇️ 자동가져오기</button>
+    <button onclick="exportData()">💾 백업</button>
+    <button onclick="document.getElementById('importFile').click()">📂 복원</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+</header>
+
+<div class="sync-banner" id="syncBanner"></div>
+<div class="last-updated" id="lastUpdated"></div>
+
+<!-- Quick edit bar -->
+<div class="quick-bar">
+  <label>ETA</label><input type="text" id="q_eta" placeholder="26/MAY 1700">
+  <label>ETB</label><input type="text" id="q_etb" placeholder="26/MAY 1900">
+  <label>ETD</label><input type="text" id="q_etd" placeholder="01/JUN">
+  <label>상태</label>
+  <select id="q_status" style="border:1px solid var(--border);border-radius:4px;padding:4px;font-size:12px;">
+    <option>LOADING</option><option>SAILING</option><option>DRIFTING</option>
+    <option>ANCHORED</option><option>BERTHED</option><option>DISCHARGING</option>
+  </select>
+  <button onclick="saveQuick()">⚡ 빠른 저장</button>
+</div>
+
+<main>
+  <!-- 항차 상태 -->
+  <div class="card col-8">
+    <h2>🚢 현재 항차 <span class="badge" id="voyageStatusBadge">DRIFTING</span></h2>
+    <div class="voyage-status">
+      <div class="port-block">
+        <h3 id="depPortName">🟢 출발 · 동해</h3>
+        <div class="time-row">
+          <div class="lbl">ATA</div><div id="depAta">-</div>
+          <div class="lbl">ATB</div><div id="depAtb">-</div>
+          <div class="lbl">ATD</div><div id="depAtd">-</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:5px;" id="depExtra"></div>
+      </div>
+      <div class="port-arrow">→</div>
+      <div class="port-block">
+        <h3 id="arrPortName">🔵 도착 · 당진(장안서)</h3>
+        <div class="time-row">
+          <div class="lbl">ETA</div><div id="arrEta">-</div>
+          <div class="lbl">ETB</div><div id="arrEtb">-</div>
+          <div class="lbl">ETD</div><div id="arrEtd">-</div>
+        </div>
+      </div>
+    </div>
+    <div class="notes-box" id="notesBox"></div>
+  </div>
+
+  <!-- 날씨 -->
+  <div class="card col-4">
+    <h2>🌤️ 항구 날씨</h2>
+    <div class="weather-block">
+      <div class="weather-card" id="wDonghae"><h3>동해항</h3><div class="weather-loading">불러오는 중...</div></div>
+      <div class="weather-card" id="wDangjin"><h3>당진항</h3><div class="weather-loading">불러오는 중...</div></div>
+    </div>
+    <div class="weather-links">
+      <a href="https://www.windy.com/?37.524,129.115,9" target="_blank">Windy 동해</a>
+      <a href="https://www.windy.com/?36.889,126.645,9" target="_blank">Windy 당진</a>
+      <a href="https://www.weather.go.kr/w/index.do" target="_blank">기상청</a>
+    </div>
+  </div>
+
+  <!-- 작업현황: 적/양하 진행률 -->
+  <div class="card col-6">
+    <h2>📦 작업 진행률 <button class="mini-btn" onclick="openCargoModal()">편집</button></h2>
+    <div class="cargo-type-switch">
+      <button id="ct-load" onclick="switchCargoType('LOADING')">⬆️ 적하 (LOADING)</button>
+      <button id="ct-disch" onclick="switchCargoType('DISCHARGING')">⬇️ 양하 (DISCHARGING)</button>
+    </div>
+    <div class="cargo-progress">
+      <div class="bar-wrap"><div class="bar-fill" id="cargoBar" style="width:0%">0%</div></div>
+      <div class="stats">
+        <div><div class="lbl">총 화물</div><div class="val" id="cargoTotal">- MT</div></div>
+        <div><div class="lbl">완료</div><div class="val" id="cargoDone">- MT</div></div>
+        <div><div class="lbl">잔량</div><div class="val" id="cargoLeft">- MT</div></div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted);text-align:center;" id="cargoRate">시간당 평균 -</div>
+    </div>
+  </div>
+
+  <!-- 작업 제한사항 -->
+  <div class="card col-6">
+    <h2>⚠️ 작업 제한사항 <button class="mini-btn" onclick="openRestrictionsModal()">편집</button></h2>
+    <div class="restriction-grid" id="restrictionsList"></div>
+  </div>
+
+  <!-- 벙커 ROB -->
+  <div class="card col-8">
+    <h2>⛽ 벙커 ROB <span class="badge" id="bunkerTime">-</span></h2>
+    <div class="bunker-grid">
+      <div class="bunker-cell" id="cellFO">
+        <div><span class="num" id="robFO">-</span><span class="unit">MT</span></div>
+        <div class="label">FO</div>
+        <span class="alert-tag" id="alertFO"></span>
+      </div>
+      <div class="bunker-cell" id="cellDO">
+        <div><span class="num" id="robDO">-</span><span class="unit">MT</span></div>
+        <div class="label">DO</div>
+        <span class="alert-tag" id="alertDO"></span>
+      </div>
+      <div class="bunker-cell" id="cellFW">
+        <div><span class="num" id="robFW">-</span><span class="unit">MT</span></div>
+        <div class="label">FW</div>
+        <span class="alert-tag" id="alertFW"></span>
+      </div>
+    </div>
+    <div class="draft-row">
+      <div><div class="lbl">FORE</div><div id="draftF">- m</div></div>
+      <div><div class="lbl">MID</div><div id="draftM">- m</div></div>
+      <div><div class="lbl">AFT</div><div id="draftA">- m</div></div>
+    </div>
+    <div class="position-info" id="positionInfo">위치 정보 없음</div>
+  </div>
+
+  <!-- 다음 예정 작업 -->
+  <div class="card col-4">
+    <h2>📅 다음 예정 <button class="mini-btn" onclick="openNextWorkModal()">편집</button></h2>
+    <div id="nextWorkList"></div>
+  </div>
+
+  <!-- 일별 작업 로그 -->
+  <div class="card col-8">
+    <h2>📝 일별 작업 로그</h2>
+    <div class="work-log-form">
+      <input type="date" id="logDate">
+      <select id="logType">
+        <option value="WORK">작업</option>
+        <option value="NOWORK">NO WORK</option>
+        <option value="STOPPED">중단</option>
+        <option value="NOTE">메모</option>
+      </select>
+      <input type="text" id="logContent" placeholder="작업 내용 / 사유 / 특이사항">
+      <button onclick="addLog()">+ 추가</button>
+    </div>
+    <div class="work-log" id="workLogList"></div>
+  </div>
+
+  <!-- 외부 링크 + 가이드 -->
+  <div class="card col-4">
+    <h2>🔗 외부 링크</h2>
+    <div class="link-list">
+      <a href="https://www.marinetraffic.com/en/ais/index/search/all?keyword=DAEJU%20ARIRANG%202" target="_blank"><span class="ic">📡</span> Marine Traffic</a>
+      <a href="https://www.vesselfinder.com/?keyword=DAEJU+ARIRANG+2" target="_blank"><span class="ic">🛰️</span> VesselFinder</a>
+      <a href="https://new.portmis.go.kr/portmis/" target="_blank"><span class="ic">🏢</span> PORT-MIS</a>
+    </div>
+    <h2 style="margin-top:14px;">📋 벙커링 가이드</h2>
+    <div style="font-size:12px;line-height:1.7;">
+      • 당진 출항 후 <strong>부산 DO 벙커링</strong><br>
+      • 정박 장기화 시 <strong>당진 빠지 ARANGG</strong><br>
+      • <strong>FO + DO 동시 진행</strong> 원칙<br>
+      • 평균: <strong>FO 100MT / DO 10MT</strong>
+    </div>
+  </div>
+
+  <!-- 항차 이력 -->
+  <div class="card col-12">
+    <h2>📅 항차 이력 <button class="mini-btn" onclick="clearHistory()" style="border-color:var(--danger);color:var(--danger);">전체삭제</button></h2>
+    <div id="historyContainer">
+      <div class="no-history">완료된 항차가 없습니다. '항차 완료' 버튼으로 저장하세요.</div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  데이터는 브라우저 localStorage에 저장 · 백업/복원으로 PC↔폰 동기화 · v2.0
+</footer>
+
+<!-- 메인 수정 모달 -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h2>📝 운항 정보 입력</h2>
+    <div class="form-grid">
+      <div><label>출발항</label><input type="text" id="f_depPort"></div>
+      <div><label>도착항</label><input type="text" id="f_arrPort"></div>
+      <div><label>화물</label><input type="text" id="f_cargo"></div>
+      <div><label>현재 상태</label>
+        <select id="f_status">
+          <option>LOADING</option><option>SAILING</option><option>DRIFTING</option>
+          <option>ANCHORED</option><option>BERTHED</option><option>DISCHARGING</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-section">
+      <h3>🟢 출발항</h3>
+      <div class="form-grid">
+        <div><label>ATA</label><input type="text" id="f_ata"></div>
+        <div><label>ATB</label><input type="text" id="f_atb"></div>
+        <div><label>ATD</label><input type="text" id="f_atd"></div>
+        <div><label>주말/공휴일 작업</label>
+          <select id="f_weekend"><option>O</option><option>X</option><option>-</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="form-section">
+      <h3>🔵 도착항 (정확 시각 입력시 카운트다운 표시)</h3>
+      <div class="form-grid">
+        <div><label>ETA</label><input type="text" id="f_eta"></div>
+        <div><label>ETA 정확 시각</label><input type="datetime-local" id="f_etaISO"></div>
+        <div><label>ETB</label><input type="text" id="f_etb"></div>
+        <div><label>ETB 정확 시각</label><input type="datetime-local" id="f_etbISO"></div>
+        <div><label>ETD</label><input type="text" id="f_etd"></div>
+        <div><label>ETD 정확 시각</label><input type="datetime-local" id="f_etdISO"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <h3>⛽ 벙커 ROB</h3>
+      <div class="form-grid">
+        <div><label>FO (MT)</label><input type="number" step="0.01" id="f_fo"></div>
+        <div><label>DO (MT)</label><input type="number" step="0.01" id="f_do"></div>
+        <div><label>FW (MT)</label><input type="number" step="0.01" id="f_fw"></div>
+        <div><label>업데이트 시각</label><input type="text" id="f_bunkerTime"></div>
+        <div><label>FO 경고 임계치</label><input type="number" step="0.01" id="f_foThreshold"></div>
+        <div><label>DO 경고 임계치</label><input type="number" step="0.01" id="f_doThreshold"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <h3>📏 흘수 (Draft)</h3>
+      <div class="form-grid">
+        <div><label>FORE</label><input type="text" id="f_draftF"></div>
+        <div><label>MID</label><input type="text" id="f_draftM"></div>
+        <div><label>AFT</label><input type="text" id="f_draftA"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <h3>📍 위치 · 특이사항</h3>
+      <div class="form-grid">
+        <div><label>위도</label><input type="text" id="f_lat"></div>
+        <div><label>경도</label><input type="text" id="f_lon"></div>
+        <div class="full"><label>특이사항</label><textarea id="f_notes" rows="3"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeEditModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveData()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 화물 진행률 모달 -->
+<div class="modal-overlay" id="cargoModal">
+  <div class="modal">
+    <h2>📦 화물 작업 진행률</h2>
+    <div class="form-grid">
+      <div><label>화물 종류</label><input type="text" id="c_type" placeholder="석회석"></div>
+      <div><label>작업 종류</label>
+        <select id="c_op"><option value="LOADING">LOADING</option><option value="DISCHARGING">DISCHARGING</option></select>
+      </div>
+      <div><label>총 화물량 (MT)</label><input type="number" id="c_total" step="0.1"></div>
+      <div><label>현재 완료량 (MT)</label><input type="number" id="c_done" step="0.1"></div>
+      <div><label>작업 시작 시각</label><input type="datetime-local" id="c_started"></div>
+      <div><label>시간당 평균 (MT/h)</label><input type="number" id="c_rate" step="0.1" placeholder="자동 계산"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeCargoModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveCargo()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 제한사항 모달 -->
+<div class="modal-overlay" id="restrictionsModal">
+  <div class="modal">
+    <h2>⚠️ 작업 제한사항 편집</h2>
+    <div id="restrictionsEdit"></div>
+    <button class="btn btn-secondary" onclick="addRestriction()" style="margin-top:8px;">+ 항목 추가</button>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeRestrictionsModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveRestrictions()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 다음 예정 작업 모달 -->
+<div class="modal-overlay" id="nextWorkModal">
+  <div class="modal">
+    <h2>📅 다음 예정 작업 편집</h2>
+    <div id="nextWorkEdit"></div>
+    <button class="btn btn-secondary" onclick="addNextWork()" style="margin-top:8px;">+ 항목 추가</button>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeNextWorkModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveNextWork()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Data model =====
+const STORAGE_KEY = 'daeju_arirang2_v2';
+const HISTORY_KEY = 'daeju_arirang2_history';
+
+const DEFAULT_DATA = {
+  depPort: '동해', arrPort: '당진(장안서)', cargo: '석회석 30,000MT', status: 'DRIFTING',
+  ata: '5/23', atb: '5/23', atd: '5/24 1600', weekend: 'O',
+  eta: '26/MAY 1700', etaISO: '2026-05-26T17:00',
+  etb: '26/MAY 1900', etbISO: '2026-05-26T19:00',
+  etd: '01/JUN', etdISO: '2026-06-01T00:00',
+  fo: 269.59, do: 15.66, fw: 185,
+  bunkerTime: '0900 HRS 26TH MAY', foThreshold: 100, doThreshold: 20,
+  draftF: '9-72', draftM: '9-93', draftA: '10-13',
+  lat: '36-08.5 N', lon: '125-44.3 E',
+  notes: 'STARTED DRIFTING 0900 HRS 26TH MAY. 1100시 항해 재개 예정. 당진 출항 후 부산 DO 벙커링 예정.',
+  cargo_loading: { type: '석회석', total: 30000, done: 30000, started: '', rate: null },
+  cargo_discharging: { type: '석회석', total: 30000, done: 0, started: '', rate: null },
+  cargoView: 'DISCHARGING',
+  restrictions: [
+    { name: '날씨', status: 'OK', note: 'SW/3 양호 (본선 daily)' },
+    { name: '조석 (TIDE)', status: 'OK', note: '저조 주의 가능' },
+    { name: '항만 혼잡', status: '제한', note: '당진 19시 접안 → 조정으로 drift 중' },
+    { name: '저장 공간', status: 'OK', note: '이전 항차 LACK OF STORAGE 발생 이력' },
+    { name: '청수 (FW)', status: 'OK', note: '동해 입항시 130MT 보충' }
+  ],
+  nextWork: [
+    { when: '5/26 1100', what: 'Drifting 종료 · 항해 재개 (본선 보고)' },
+    { when: '5/26 1700~1900', what: '당진 장안서 도착 (ETA/ETB 본선 기준)' },
+    { when: '5/27 1400', what: '당진 NO.8 부두 접안 (한동쉬핑 LINE-UP)' },
+    { when: '6/01 AM', what: 'ETD 당진 → 부산 DO 벙커링' }
+  ],
+  workLog: [
+    { date: '2026-05-24', type: 'WORK', content: '동해 BERTH 30 적하 완료 1700LT (석회석 30,000MT BL). ATD 1600' },
+    { date: '2026-05-23', type: 'WORK', content: '동해 NOR 0500LT → 0815 BERTH 30 접안 → 0900 적하 개시' },
+    { date: '2026-05-21', type: 'WORK', content: '[이전항차 V-60] 당진 양하 완료 0400LT. 총 30,609MT 양하 (웨스턴해운)' },
+    { date: '2026-05-19', type: 'NOWORK', content: '[이전항차] NO WORK DUE TO LACK OF STORAGE (5/18-5/19)' }
+  ],
+  lastUpdated: new Date().toISOString()
+};
+
+let data = loadData();
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return JSON.parse(JSON.stringify(DEFAULT_DATA));
+    const parsed = JSON.parse(raw);
+    return { ...JSON.parse(JSON.stringify(DEFAULT_DATA)), ...parsed };
+  } catch(e) { return JSON.parse(JSON.stringify(DEFAULT_DATA)); }
+}
+function saveStorage() {
+  data.lastUpdated = new Date().toISOString();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; } }
+function saveHistory(arr) { localStorage.setItem(HISTORY_KEY, JSON.stringify(arr)); }
+
+// ===== Render =====
+function render() {
+  document.getElementById('vesselSubtitle').textContent = `${data.depPort} → ${data.arrPort} · ${data.cargo || ''}`;
+  document.getElementById('voyageStatusBadge').textContent = data.status;
+  document.getElementById('depPortName').textContent = `🟢 출발 · ${data.depPort}`;
+  document.getElementById('arrPortName').textContent = `🔵 도착 · ${data.arrPort}`;
+  document.getElementById('depAta').textContent = data.ata || '-';
+  document.getElementById('depAtb').textContent = data.atb || '-';
+  document.getElementById('depAtd').textContent = data.atd || '-';
+  document.getElementById('depExtra').textContent = data.weekend ? `주말/공휴일 작업: ${data.weekend}` : '';
+  document.getElementById('arrEta').innerHTML = (data.eta || '-') + countdownBadge(data.etaISO);
+  document.getElementById('arrEtb').innerHTML = (data.etb || '-') + countdownBadge(data.etbISO);
+  document.getElementById('arrEtd').innerHTML = (data.etd || '-') + countdownBadge(data.etdISO);
+
+  setBunkerCell('FO', data.fo, data.foThreshold);
+  setBunkerCell('DO', data.do, data.doThreshold);
+  setBunkerCell('FW', data.fw, null);
+
+  document.getElementById('bunkerTime').textContent = data.bunkerTime || '-';
+  document.getElementById('draftF').textContent = data.draftF ? data.draftF + ' m' : '-';
+  document.getElementById('draftM').textContent = data.draftM ? data.draftM + ' m' : '-';
+  document.getElementById('draftA').textContent = data.draftA ? data.draftA + ' m' : '-';
+  document.getElementById('positionInfo').textContent = (data.lat || data.lon) ? `📍 PSN: ${data.lat || '?'} ${data.lon || '?'}` : '위치 정보 없음';
+  document.getElementById('notesBox').textContent = data.notes ? '⚠️ ' + data.notes : '';
+  document.getElementById('lastUpdated').textContent = '마지막 업데이트: ' + new Date(data.lastUpdated).toLocaleString('ko-KR');
+
+  // Quick edit bar
+  document.getElementById('q_eta').value = data.eta || '';
+  document.getElementById('q_etb').value = data.etb || '';
+  document.getElementById('q_etd').value = data.etd || '';
+  document.getElementById('q_status').value = data.status;
+
+  renderCargo();
+  renderRestrictions();
+  renderNextWork();
+  renderWorkLog();
+  renderHistory();
+}
+
+function setBunkerCell(type, value, threshold) {
+  const numEl = document.getElementById('rob' + type);
+  const cellEl = document.getElementById('cell' + type);
+  const alertEl = document.getElementById('alert' + type);
+  const v = (value !== undefined && value !== null && value !== '') ? Number(value).toFixed(2) : '-';
+  numEl.textContent = v;
+  cellEl.classList.remove('warn', 'danger');
+  alertEl.textContent = '';
+  if (threshold !== null && value !== undefined && value !== null && value !== '') {
+    if (Number(value) < threshold * 0.5) {
+      cellEl.classList.add('danger');
+      alertEl.textContent = '🚨 긴급 벙커링';
+      alertEl.style.color = 'var(--danger)';
+    } else if (Number(value) < threshold) {
+      cellEl.classList.add('warn');
+      alertEl.textContent = '⚠️ 벙커링 검토';
+      alertEl.style.color = 'var(--warn)';
+    }
+  }
+}
+
+function countdownBadge(iso) {
+  if (!iso) return '';
+  const target = new Date(iso);
+  if (isNaN(target)) return '';
+  const diffMs = target - new Date();
+  const absMs = Math.abs(diffMs);
+  const hours = Math.floor(absMs / 3600000);
+  const mins = Math.floor((absMs % 3600000) / 60000);
+  let txt, cls;
+  if (diffMs < 0) { txt = `D+${Math.floor(-diffMs / 86400000)}일 경과`; cls = 'past'; }
+  else if (hours < 3) { txt = `${hours}h ${mins}m 후`; cls = 'urgent'; }
+  else if (hours < 24) { txt = `${hours}h 후`; cls = 'soon'; }
+  else { const days = Math.floor(hours / 24); const remH = hours % 24; txt = `D-${days}일 ${remH}h`; cls = ''; }
+  return `<span class="countdown ${cls}">${txt}</span>`;
+}
+
+// ===== Cargo progress =====
+function renderCargo() {
+  const view = data.cargoView || 'DISCHARGING';
+  document.getElementById('ct-load').classList.toggle('active', view === 'LOADING');
+  document.getElementById('ct-disch').classList.toggle('active', view === 'DISCHARGING');
+  const c = (view === 'LOADING') ? data.cargo_loading : data.cargo_discharging;
+  const pct = (c.total > 0) ? Math.min(100, (c.done / c.total) * 100) : 0;
+  const bar = document.getElementById('cargoBar');
+  bar.style.width = pct + '%';
+  bar.textContent = pct.toFixed(1) + '%';
+  document.getElementById('cargoTotal').textContent = (c.total ?? 0).toLocaleString() + ' MT';
+  document.getElementById('cargoDone').textContent = (c.done ?? 0).toLocaleString() + ' MT';
+  document.getElementById('cargoLeft').textContent = Math.max(0, (c.total - c.done)).toLocaleString() + ' MT';
+
+  let rateStr = '시간당 평균 -';
+  if (c.rate) {
+    rateStr = `시간당 평균 ${c.rate} MT/h`;
+    const left = c.total - c.done;
+    if (left > 0 && c.rate > 0) {
+      const hoursLeft = (left / c.rate).toFixed(1);
+      rateStr += ` · 남은 시간 약 ${hoursLeft}h`;
+    }
+  } else if (c.started && c.done > 0) {
+    const elapsedH = (new Date() - new Date(c.started)) / 3600000;
+    if (elapsedH > 0.5) {
+      const calc = (c.done / elapsedH).toFixed(1);
+      rateStr = `시간당 평균 ${calc} MT/h (자동계산)`;
+    }
+  }
+  document.getElementById('cargoRate').textContent = rateStr;
+}
+function switchCargoType(t) { data.cargoView = t; saveStorage(); renderCargo(); }
+function openCargoModal() {
+  const view = data.cargoView || 'DISCHARGING';
+  const c = (view === 'LOADING') ? data.cargo_loading : data.cargo_discharging;
+  document.getElementById('c_type').value = c.type || '';
+  document.getElementById('c_op').value = view;
+  document.getElementById('c_total').value = c.total ?? '';
+  document.getElementById('c_done').value = c.done ?? '';
+  document.getElementById('c_started').value = c.started || '';
+  document.getElementById('c_rate').value = c.rate ?? '';
+  document.getElementById('cargoModal').classList.add('open');
+}
+function closeCargoModal() { document.getElementById('cargoModal').classList.remove('open'); }
+function saveCargo() {
+  const op = document.getElementById('c_op').value;
+  const key = (op === 'LOADING') ? 'cargo_loading' : 'cargo_discharging';
+  data[key] = {
+    type: document.getElementById('c_type').value,
+    total: parseFloat(document.getElementById('c_total').value) || 0,
+    done: parseFloat(document.getElementById('c_done').value) || 0,
+    started: document.getElementById('c_started').value,
+    rate: parseFloat(document.getElementById('c_rate').value) || null
+  };
+  data.cargoView = op;
+  saveStorage();
+  closeCargoModal();
+  render();
+}
+
+// ===== Restrictions =====
+function renderRestrictions() {
+  const list = document.getElementById('restrictionsList');
+  list.innerHTML = '';
+  (data.restrictions || []).forEach(r => {
+    const cls = (r.status === 'OK') ? '' : 'restricted';
+    const div = document.createElement('div');
+    div.className = 'restriction-row ' + cls;
+    div.innerHTML = `<div class="status-dot"></div>
+      <div><div class="name">${escapeHtml(r.name)}</div><div class="note">${escapeHtml(r.note || (r.status === 'OK' ? '정상' : '제한'))}</div></div>
+      <div>${r.status}</div>`;
+    list.appendChild(div);
+  });
+}
+function openRestrictionsModal() {
+  const editor = document.getElementById('restrictionsEdit');
+  editor.innerHTML = '';
+  (data.restrictions || []).forEach((r, i) => addRestrictionRow(r, i));
+  document.getElementById('restrictionsModal').classList.add('open');
+}
+function addRestrictionRow(r = { name: '', status: 'OK', note: '' }, idx) {
+  const editor = document.getElementById('restrictionsEdit');
+  const id = 'r_' + Math.random().toString(36).slice(2, 8);
+  const div = document.createElement('div');
+  div.style = 'display:grid;grid-template-columns:1fr 100px 1fr auto;gap:6px;margin-bottom:6px;';
+  div.dataset.id = id;
+  div.innerHTML = `
+    <input type="text" placeholder="항목명" value="${escapeAttr(r.name)}" data-k="name" style="padding:6px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+    <select data-k="status" style="padding:6px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+      <option value="OK" ${r.status==='OK'?'selected':''}>OK</option>
+      <option value="제한" ${r.status==='제한'?'selected':''}>제한</option>
+      <option value="중단" ${r.status==='중단'?'selected':''}>중단</option>
+    </select>
+    <input type="text" placeholder="비고" value="${escapeAttr(r.note)}" data-k="note" style="padding:6px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+    <button onclick="this.parentNode.remove()" style="background:transparent;border:1px solid var(--danger);color:var(--danger);border-radius:4px;padding:0 8px;cursor:pointer;">✕</button>
+  `;
+  editor.appendChild(div);
+}
+function addRestriction() { addRestrictionRow(); }
+function closeRestrictionsModal() { document.getElementById('restrictionsModal').classList.remove('open'); }
+function saveRestrictions() {
+  const rows = document.getElementById('restrictionsEdit').children;
+  const list = [];
+  for (const row of rows) {
+    const r = {};
+    row.querySelectorAll('[data-k]').forEach(el => r[el.dataset.k] = el.value);
+    if (r.name) list.push(r);
+  }
+  data.restrictions = list;
+  saveStorage();
+  closeRestrictionsModal();
+  render();
+}
+
+// ===== Next work =====
+function renderNextWork() {
+  const list = document.getElementById('nextWorkList');
+  list.innerHTML = '';
+  if (!data.nextWork || data.nextWork.length === 0) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:10px;">예정된 작업 없음</div>';
+    return;
+  }
+  data.nextWork.forEach(n => {
+    const div = document.createElement('div');
+    div.className = 'next-work-item';
+    div.innerHTML = `<div class="when">${escapeHtml(n.when)}</div><div class="what">${escapeHtml(n.what)}</div>`;
+    list.appendChild(div);
+  });
+}
+function openNextWorkModal() {
+  const editor = document.getElementById('nextWorkEdit');
+  editor.innerHTML = '';
+  (data.nextWork || []).forEach(n => addNextWorkRow(n));
+  document.getElementById('nextWorkModal').classList.add('open');
+}
+function addNextWorkRow(n = { when: '', what: '' }) {
+  const editor = document.getElementById('nextWorkEdit');
+  const div = document.createElement('div');
+  div.style = 'display:grid;grid-template-columns:140px 1fr auto;gap:6px;margin-bottom:6px;';
+  div.innerHTML = `
+    <input type="text" placeholder="시각" value="${escapeAttr(n.when)}" data-k="when" style="padding:6px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+    <input type="text" placeholder="작업 내용" value="${escapeAttr(n.what)}" data-k="what" style="padding:6px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+    <button onclick="this.parentNode.remove()" style="background:transparent;border:1px solid var(--danger);color:var(--danger);border-radius:4px;padding:0 8px;cursor:pointer;">✕</button>
+  `;
+  editor.appendChild(div);
+}
+function addNextWork() { addNextWorkRow(); }
+function closeNextWorkModal() { document.getElementById('nextWorkModal').classList.remove('open'); }
+function saveNextWork() {
+  const rows = document.getElementById('nextWorkEdit').children;
+  const list = [];
+  for (const row of rows) {
+    const n = {};
+    row.querySelectorAll('[data-k]').forEach(el => n[el.dataset.k] = el.value);
+    if (n.when || n.what) list.push(n);
+  }
+  data.nextWork = list;
+  saveStorage();
+  closeNextWorkModal();
+  render();
+}
+
+// ===== Work log =====
+function renderWorkLog() {
+  const list = document.getElementById('workLogList');
+  const logs = (data.workLog || []).slice().sort((a, b) => (b.date > a.date ? 1 : -1));
+  if (logs.length === 0) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:10px;">로그 없음</div>';
+    return;
+  }
+  list.innerHTML = '';
+  logs.forEach((l, idx) => {
+    const cls = l.type === 'NOWORK' ? 'no-work' : (l.type === 'STOPPED' ? 'stopped' : '');
+    const tagCls = l.type === 'NOWORK' ? 'no' : (l.type === 'STOPPED' ? 'stop' : '');
+    const div = document.createElement('div');
+    div.className = 'work-log-item ' + cls;
+    div.innerHTML = `
+      <div class="top-line">
+        <span class="date">${escapeHtml(l.date)} <span class="type-tag ${tagCls}">${escapeHtml(l.type)}</span></span>
+        <button class="del" data-idx="${idx}">삭제</button>
+      </div>
+      <div class="content">${escapeHtml(l.content)}</div>`;
+    list.appendChild(div);
+  });
+  list.querySelectorAll('.del').forEach(b => b.onclick = (e) => deleteLog(parseInt(e.target.dataset.idx)));
+}
+function addLog() {
+  const date = document.getElementById('logDate').value;
+  const type = document.getElementById('logType').value;
+  const content = document.getElementById('logContent').value.trim();
+  if (!date || !content) { alert('날짜와 내용을 입력하세요.'); return; }
+  data.workLog = data.workLog || [];
+  data.workLog.unshift({ date, type, content });
+  document.getElementById('logContent').value = '';
+  saveStorage();
+  renderWorkLog();
+}
+function deleteLog(idx) {
+  if (!confirm('이 로그를 삭제할까요?')) return;
+  const sorted = (data.workLog || []).slice().sort((a, b) => (b.date > a.date ? 1 : -1));
+  const target = sorted[idx];
+  data.workLog = data.workLog.filter(l => l !== target && !(l.date === target.date && l.content === target.content && l.type === target.type));
+  saveStorage();
+  renderWorkLog();
+}
+
+// ===== History =====
+function renderHistory() {
+  const history = loadHistory();
+  const container = document.getElementById('historyContainer');
+  if (history.length === 0) {
+    container.innerHTML = '<div class="no-history">완료된 항차가 없습니다.</div>';
+    return;
+  }
+  let html = '<div style="overflow-x:auto;"><table class="history-table"><thead><tr><th>완료일</th><th>항로</th><th>화물</th><th>ATD</th><th>ETA→ETD</th><th>최종 ROB(FO/DO)</th><th></th></tr></thead><tbody>';
+  history.forEach((h, i) => {
+    html += `<tr>
+      <td>${escapeHtml(h.completedAt || '-')}</td>
+      <td>${escapeHtml(h.depPort || '')} → ${escapeHtml(h.arrPort || '')}</td>
+      <td>${escapeHtml(h.cargo || '-')}</td>
+      <td>${escapeHtml(h.atd || '-')}</td>
+      <td>${escapeHtml(h.eta || '-')} → ${escapeHtml(h.etd || '-')}</td>
+      <td>${h.fo || '-'} / ${h.do || '-'}</td>
+      <td><button onclick="deleteHistory(${i})" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:11px;">삭제</button></td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+function completeVoyage() {
+  if (!confirm('현재 항차를 완료로 저장하시겠습니까?')) return;
+  const history = loadHistory();
+  history.unshift({ completedAt: new Date().toLocaleDateString('ko-KR'), ...data });
+  saveHistory(history);
+  alert('이력 저장 완료. 새 항차 정보를 입력하세요.');
+  render();
+}
+function deleteHistory(i) {
+  if (!confirm('이 이력을 삭제할까요?')) return;
+  const h = loadHistory(); h.splice(i, 1); saveHistory(h); render();
+}
+function clearHistory() {
+  if (!confirm('항차 이력을 전부 삭제할까요?')) return;
+  saveHistory([]); render();
+}
+
+// ===== Modal main =====
+function openEditModal() {
+  ['depPort','arrPort','cargo','status','ata','atb','atd','weekend','eta','etaISO','etb','etbISO','etd','etdISO',
+   'fo','do','fw','bunkerTime','foThreshold','doThreshold','draftF','draftM','draftA','lat','lon','notes']
+    .forEach(k => { const el = document.getElementById('f_' + k); if (el) el.value = data[k] ?? ''; });
+  document.getElementById('editModal').classList.add('open');
+}
+function closeEditModal() { document.getElementById('editModal').classList.remove('open'); }
+function saveData() {
+  const keys = ['depPort','arrPort','cargo','status','ata','atb','atd','weekend','eta','etaISO','etb','etbISO','etd','etdISO',
+                'fo','do','fw','bunkerTime','foThreshold','doThreshold','draftF','draftM','draftA','lat','lon','notes'];
+  for (const k of keys) {
+    const el = document.getElementById('f_' + k); if (!el) continue;
+    let v = el.value;
+    if (['fo','do','fw','foThreshold','doThreshold'].includes(k)) v = v === '' ? null : Number(v);
+    data[k] = v;
+  }
+  saveStorage(); closeEditModal(); render();
+}
+
+// ===== Quick save =====
+function saveQuick() {
+  data.eta = document.getElementById('q_eta').value;
+  data.etb = document.getElementById('q_etb').value;
+  data.etd = document.getElementById('q_etd').value;
+  data.status = document.getElementById('q_status').value;
+  saveStorage(); render();
+  showBanner('✅ ETA/ETB/ETD 저장됨', 'ok', 2000);
+}
+
+// ===== Backup / Restore (OneDrive JSON 동기화) =====
+function exportData() {
+  const payload = {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    data: data,
+    history: loadHistory()
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dateStr = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `daeju_arirang2_backup_${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showBanner('💾 백업 파일이 다운로드 되었습니다. OneDrive 폴더에 저장하세요.', 'ok', 4000);
+}
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const payload = JSON.parse(e.target.result);
+      if (!payload.data) throw new Error('잘못된 백업 파일');
+      if (!confirm('현재 데이터를 백업 파일로 덮어쓸까요?')) return;
+      data = payload.data;
+      saveStorage();
+      if (payload.history) saveHistory(payload.history);
+      render();
+      showBanner('📂 데이터가 복원되었습니다.', 'ok', 3000);
+    } catch(e) {
+      showBanner('❌ 복원 실패: ' + e.message, 'error', 4000);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function showBanner(msg, type='ok', ms=3000) {
+  const b = document.getElementById('syncBanner');
+  b.textContent = msg;
+  b.className = 'sync-banner ' + (type === 'error' ? 'error' : type === 'warn' ? 'warn' : '');
+  setTimeout(() => { b.textContent = ''; b.className = 'sync-banner'; }, ms);
+}
+
+// ===== Weather =====
+const PORTS = [
+  { id: 'wDonghae', name: '동해항', lat: 37.5247, lon: 129.1147 },
+  { id: 'wDangjin', name: '당진항', lat: 36.8893, lon: 126.6448 }
+];
+function weatherIcon(c){if(c===0)return'☀️';if(c<=3)return'⛅';if(c<=48)return'🌫️';if(c<=67)return'🌧️';if(c<=77)return'🌨️';if(c<=82)return'🌧️';if(c<=99)return'⛈️';return'🌡️';}
+function weatherDesc(c){const m={0:'맑음',1:'대체로 맑음',2:'구름조금',3:'흐림',45:'안개',48:'서리안개',51:'이슬비(약)',53:'이슬비',55:'이슬비(강)',61:'비(약)',63:'비',65:'비(강)',71:'눈(약)',73:'눈',75:'눈(강)',80:'소나기(약)',81:'소나기',82:'소나기(강)',95:'뇌우',96:'뇌우(약 우박)',99:'뇌우(강 우박)'};return m[c]||`코드 ${c}`;}
+function windDir(d){if(d==null)return'';const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];return dirs[Math.round(d/22.5)%16];}
+async function refreshWeather() {
+  for (const p of PORTS) {
+    const el = document.getElementById(p.id);
+    el.innerHTML = `<h3>${p.name}</h3><div class="weather-loading">불러오는 중...</div>`;
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code&timezone=Asia%2FSeoul`;
+      const r = await fetch(url);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      const c = j.current || {};
+      el.innerHTML = `<h3>${p.name}</h3>
+        <div><span class="weather-icon">${weatherIcon(c.weather_code)}</span><span class="weather-temp">${c.temperature_2m?.toFixed(1) ?? '-'}°</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">${weatherDesc(c.weather_code)}</div>
+        <div class="weather-detail">
+          <span>💨 <strong>${c.wind_speed_10m?.toFixed(1) ?? '-'} km/h</strong></span>
+          <span>🧭 <strong>${windDir(c.wind_direction_10m)}</strong></span>
+          <span>💧 <strong>${c.relative_humidity_2m ?? '-'}%</strong></span>
+          <span>🕒 ${c.time?.slice(11,16) ?? ''}</span>
+        </div>`;
+    } catch(e) {
+      el.innerHTML = `<h3>${p.name}</h3><div class="weather-error">날씨 호출 실패<br><small>Windy 링크 사용</small></div>`;
+    }
+  }
+}
+
+// ===== Util =====
+function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s) { return escapeHtml(s); }
+
+// ===== Auto fetch from data.json (Power Automate가 갱신) =====
+const REMOTE_DATA_URL = './data.json';   // 같은 폴더의 data.json (OneDrive/GitHub Pages 동일)
+const AUTO_FETCH_INTERVAL_MS = 5 * 60 * 1000;  // 5분마다
+let lastRemoteHash = null;
+
+async function fetchRemoteData(manual = false) {
+  try {
+    const r = await fetch(REMOTE_DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) {
+      if (manual) showBanner('⚠️ data.json을 찾을 수 없습니다. Power Automate 자동화 설정 후 사용하세요.', 'warn', 4000);
+      return;
+    }
+    const remote = await r.json();
+    const payload = remote.data ? remote : { data: remote };
+    const newHash = JSON.stringify(payload.data);
+    if (newHash === lastRemoteHash && !manual) return;  // 변경 없으면 무시
+    lastRemoteHash = newHash;
+    // 자동 병합: 원격 값으로 덮어쓰기, 없는 필드는 유지
+    data = { ...data, ...payload.data };
+    if (payload.history) saveHistory(payload.history);
+    saveStorage();
+    render();
+    const ts = new Date().toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'});
+    showBanner(`⬇️ 자동 가져옴 (${ts})`, 'ok', 2500);
+  } catch(e) {
+    if (manual) showBanner('❌ 가져오기 실패: ' + e.message, 'error', 3000);
+  }
+}
+
+// ===== Init =====
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('logDate').value = new Date().toISOString().slice(0,10);
+  render();
+  refreshWeather();
+  setInterval(render, 60000);
+  // 자동 데이터 fetch
+  fetchRemoteData(false);
+  setInterval(() => fetchRemoteData(false), AUTO_FETCH_INTERVAL_MS);
+  // PWA service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+});
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
