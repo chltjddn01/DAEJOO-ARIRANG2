@@ -52,6 +52,33 @@
   }
   header h1 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; }
   header .sub { opacity: 0.9; font-size: 12px; }
+  header .now-time {
+    font-size: 12px;
+    opacity: 0.95;
+    font-family: 'Consolas', 'D2Coding', monospace;
+    margin-top: 4px;
+    letter-spacing: 0.2px;
+    background: rgba(255,255,255,0.12);
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  header .now-time.tick { animation: tick 1s ease; }
+  @keyframes tick {
+    0% { background: rgba(255,255,255,0.25); }
+    100% { background: rgba(255,255,255,0.12); }
+  }
+  .top-actions button.refresh-all {
+    background: rgba(255,255,255,0.32);
+    font-weight: 600;
+  }
+  .top-actions button.refresh-all.spinning {
+    animation: spin 0.8s ease;
+  }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
   .top-actions { display: flex; gap: 6px; flex-wrap: wrap; }
   .top-actions button {
     background: rgba(255,255,255,0.18);
@@ -154,6 +181,115 @@
     header h1 { font-size: 16px; }
     main { padding: 10px; gap: 10px; }
   }
+
+  /* Voyage cycle (4 stage) */
+  .cycle-card { position: relative; }
+  .cycle-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .cycle-header .vno {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 15px;
+  }
+  .cycle-header .vstage {
+    background: var(--accent);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .cycle-track {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin: 8px 0 4px 0;
+  }
+  .cycle-line {
+    position: absolute;
+    top: 18px;
+    left: 12.5%;
+    right: 12.5%;
+    height: 4px;
+    background: #e4e8ee;
+    border-radius: 2px;
+    z-index: 0;
+  }
+  .cycle-line-fill {
+    position: absolute;
+    top: 18px;
+    left: 12.5%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    border-radius: 2px;
+    z-index: 1;
+    transition: width 0.4s ease;
+  }
+  .cycle-stage {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    cursor: pointer;
+  }
+  .cycle-stage .dot {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid #e4e8ee;
+    margin: 0 auto 6px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.3s ease;
+  }
+  .cycle-stage.done .dot { background: var(--primary); border-color: var(--primary); color: white; }
+  .cycle-stage.current .dot {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    box-shadow: 0 0 0 6px rgba(255, 140, 0, 0.2);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 6px rgba(255, 140, 0, 0.2); }
+    50% { box-shadow: 0 0 0 10px rgba(255, 140, 0, 0.05); }
+  }
+  .cycle-stage .label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .cycle-stage.done .label, .cycle-stage.current .label { color: var(--text); }
+  .cycle-stage .time {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-family: monospace;
+    min-height: 12px;
+  }
+  .cycle-stage.current .time { color: var(--accent); font-weight: 600; }
+  .cycle-stage:hover .dot {
+    transform: scale(1.1);
+  }
+  .cycle-info {
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .cycle-info strong { color: var(--text); }
 
   /* Voyage status */
   .voyage-status {
@@ -415,12 +551,12 @@
   <div>
     <h1>⚓ 대주아리랑2</h1>
     <div class="sub" id="vesselSubtitle">동해 → 당진(장안서) · 석회석 30,000MT</div>
+    <div class="now-time" id="nowTime">🕒 ----</div>
   </div>
   <div class="top-actions">
+    <button class="refresh-all" onclick="refreshAll()" id="refreshBtn" title="데이터+날씨+화면 전체 새로고침">🔄 새로고침</button>
+    <button onclick="openMailModal()" title="메일 본문 붙여넣기로 자동 입력">✉️ 메일</button>
     <button onclick="openEditModal()">📝 수정</button>
-    <button onclick="completeVoyage()">✅ 항차 완료</button>
-    <button onclick="refreshWeather()">🔄 날씨</button>
-    <button onclick="fetchRemoteData(true)" title="data.json에서 즉시 가져오기">⬇️ 자동가져오기</button>
     <button onclick="exportData()">💾 백업</button>
     <button onclick="document.getElementById('importFile').click()">📂 복원</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
@@ -444,6 +580,40 @@
 </div>
 
 <main>
+  <!-- 항차 사이클 (4단계: 당진ETD→동해ATA→동해ATD→당진ETA) -->
+  <div class="card col-12 cycle-card">
+    <h2>🔄 항차 사이클 <button class="mini-btn" onclick="openCycleModal()">편집</button></h2>
+    <div class="cycle-header">
+      <span class="vno" id="cycleVno">V-? · 동해 ↔ 당진 왕복 항차</span>
+      <span class="vstage" id="cycleStage">대기</span>
+    </div>
+    <div class="cycle-track">
+      <div class="cycle-line"></div>
+      <div class="cycle-line-fill" id="cycleLineFill" style="width:0%"></div>
+      <div class="cycle-stage" id="stage1" onclick="openCycleModal()">
+        <div class="dot">🚢</div>
+        <div class="label">① 당진 출항</div>
+        <div class="time" id="t1">-</div>
+      </div>
+      <div class="cycle-stage" id="stage2" onclick="openCycleModal()">
+        <div class="dot">⚓</div>
+        <div class="label">② 동해 입항·적하</div>
+        <div class="time" id="t2">-</div>
+      </div>
+      <div class="cycle-stage" id="stage3" onclick="openCycleModal()">
+        <div class="dot">🚢</div>
+        <div class="label">③ 동해 출항</div>
+        <div class="time" id="t3">-</div>
+      </div>
+      <div class="cycle-stage" id="stage4" onclick="openCycleModal()">
+        <div class="dot">⚓</div>
+        <div class="label">④ 당진 입항·양하</div>
+        <div class="time" id="t4">-</div>
+      </div>
+    </div>
+    <div class="cycle-info" id="cycleInfo">항차 정보를 입력하세요</div>
+  </div>
+
   <!-- 항차 상태 -->
   <div class="card col-8">
     <h2>🚢 현재 항차 <span class="badge" id="voyageStatusBadge">DRIFTING</span></h2>
@@ -660,6 +830,76 @@
   </div>
 </div>
 
+<!-- 항차 사이클 편집 모달 -->
+<div class="modal-overlay" id="cycleModal">
+  <div class="modal">
+    <h2>🔄 항차 사이클 편집</h2>
+    <p style="font-size:12px;color:var(--muted);margin:0 0 12px 0;">
+      1항차 = 당진 출항 → 동해 입항 → 동해 출항 → 당진 입항 (왕복 한 사이클).<br>
+      현재 위치는 입력된 시각으로 자동 판정됩니다.
+    </p>
+    <div class="form-grid">
+      <div><label>항차 번호</label><input type="text" id="cy_no" placeholder="V-61"></div>
+      <div><label>화물</label><input type="text" id="cy_cargo" placeholder="석회석 30,000MT"></div>
+    </div>
+    <div class="form-section">
+      <h3>① 당진 출항 (이전 양하 종료 → 항차 시작)</h3>
+      <div class="form-grid">
+        <div><label>실제 ATD (자유형식)</label><input type="text" id="cy_s1_text" placeholder="5/21 1000LT"></div>
+        <div><label>정확 시각 (선택)</label><input type="datetime-local" id="cy_s1_iso"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <h3>② 동해 입항·적하</h3>
+      <div class="form-grid">
+        <div><label>동해 ATA</label><input type="text" id="cy_s2_text" placeholder="5/23 0500LT"></div>
+        <div><label>정확 시각</label><input type="datetime-local" id="cy_s2_iso"></div>
+        <div class="full" style="font-size:11px;color:var(--muted);">접안/적하 완료 시각은 [동해 ATB / 적하 완료]에 자동 반영됩니다.</div>
+      </div>
+    </div>
+    <div class="form-section">
+      <h3>③ 동해 출항 (적하 종료 → 당진 향발)</h3>
+      <div class="form-grid">
+        <div><label>동해 ATD</label><input type="text" id="cy_s3_text" placeholder="5/24 1600LT"></div>
+        <div><label>정확 시각</label><input type="datetime-local" id="cy_s3_iso"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <h3>④ 당진 입항·양하 (항차 종료점)</h3>
+      <div class="form-grid">
+        <div><label>당진 ETA / ATA</label><input type="text" id="cy_s4_text" placeholder="5/26 1700"></div>
+        <div><label>정확 시각</label><input type="datetime-local" id="cy_s4_iso"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="archiveCycle()" style="margin-right:auto;">📦 항차 완료 → 이력으로 보관</button>
+      <button class="btn btn-secondary" onclick="closeCycleModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveCycle()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 메일 파싱 모달 -->
+<div class="modal-overlay" id="mailModal">
+  <div class="modal" style="max-width: 820px;">
+    <h2>✉️ 메일 자동 파싱</h2>
+    <p style="font-size:12px;color:var(--muted);margin:0 0 8px 0;">
+      본선/웨스턴해운/고려해운/한동쉬핑 메일 본문을 붙여넣으면 5가지 패턴을 자동 인식해서 ETA/ROB/DRAFT 등을 추출합니다.
+    </p>
+    <textarea id="mailInput" rows="10" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:'Consolas',monospace;" placeholder="메일 본문 전체를 여기에 붙여넣으세요 (Ctrl+V)&#10;&#10;예: A. STARTED DRIFTING : 0900 HRS 26TH MAY, PSN 36-08.5 N 125-44.3 E&#10;     B. ROB : FO- 269.59 MT, DO-15.66 MT, FW –185 MT ..."></textarea>
+    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="parseMail()">🔍 분석 & 추출</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('mailInput').value='';document.getElementById('parsedResult').innerHTML='';document.getElementById('applyParsedBtn').style.display='none';">지우기</button>
+      <button class="btn btn-secondary" onclick="pasteFromClipboard()">📋 클립보드</button>
+    </div>
+    <div id="parsedResult" style="margin-top:14px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeMailModal()">취소</button>
+      <button class="btn btn-primary" id="applyParsedBtn" onclick="applyParsed()" style="display:none;">✓ 대시보드에 적용</button>
+    </div>
+  </div>
+</div>
+
 <!-- 화물 진행률 모달 -->
 <div class="modal-overlay" id="cargoModal">
   <div class="modal">
@@ -713,6 +953,19 @@ const STORAGE_KEY = 'daeju_arirang2_v2';
 const HISTORY_KEY = 'daeju_arirang2_history';
 
 const DEFAULT_DATA = {
+  // ⭐ 항차 사이클 (1항차 = 당진ETD → 동해ATA → 동해ATD → 당진ATA)
+  cycle: {
+    no: 'V-61',
+    cargo: '석회석 30,000MT',
+    s1_text: '5/21 1000LT',  // 이전 항차 당진 출항 (= 본 항차 시작)
+    s1_iso: '2026-05-21T10:00',
+    s2_text: '5/23 0500LT',  // 동해 입항
+    s2_iso: '2026-05-23T05:00',
+    s3_text: '5/24 1600LT',  // 동해 출항
+    s3_iso: '2026-05-24T16:00',
+    s4_text: '5/26 1700',    // 당진 입항 예정
+    s4_iso: '2026-05-26T17:00'
+  },
   depPort: '동해', arrPort: '당진(장안서)', cargo: '석회석 30,000MT', status: 'DRIFTING',
   ata: '5/23', atb: '5/23', atd: '5/24 1600', weekend: 'O',
   eta: '26/MAY 1700', etaISO: '2026-05-26T17:00',
@@ -765,9 +1018,130 @@ function saveStorage() {
 function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; } }
 function saveHistory(arr) { localStorage.setItem(HISTORY_KEY, JSON.stringify(arr)); }
 
+// ===== Voyage Cycle =====
+function renderCycle() {
+  const c = data.cycle || {};
+  document.getElementById('cycleVno').textContent = `${c.no || 'V-?'} · ${c.cargo || data.cargo || ''} · 당진↔동해 왕복`;
+  const stages = [
+    { id: 'stage1', tId: 't1', text: c.s1_text, iso: c.s1_iso, label: '당진 출항' },
+    { id: 'stage2', tId: 't2', text: c.s2_text, iso: c.s2_iso, label: '동해 입항' },
+    { id: 'stage3', tId: 't3', text: c.s3_text, iso: c.s3_iso, label: '동해 출항' },
+    { id: 'stage4', tId: 't4', text: c.s4_text, iso: c.s4_iso, label: '당진 입항' }
+  ];
+  const now = new Date();
+  let currentStage = -1; // -1: 아직 시작 안 함, 0~3: 해당 단계, 4: 완료
+  for (let i = 0; i < 4; i++) {
+    const st = stages[i];
+    document.getElementById(st.tId).textContent = st.text || '-';
+    const el = document.getElementById(st.id);
+    el.classList.remove('done', 'current');
+    if (st.iso) {
+      const t = new Date(st.iso);
+      if (!isNaN(t) && t <= now) {
+        el.classList.add('done');
+        currentStage = i;
+      }
+    }
+  }
+  // 현재 단계 표시: 마지막으로 done된 다음 단계가 current
+  const next = currentStage + 1;
+  if (next >= 0 && next < 4) {
+    document.getElementById(stages[next].id).classList.remove('done');
+    document.getElementById(stages[next].id).classList.add('current');
+  }
+  // progress bar 너비
+  const totalCompleted = currentStage + 1; // 0~4
+  const fillWidth = (totalCompleted / 3) * 75;  // 75% = 25%씩 4구간
+  document.getElementById('cycleLineFill').style.width = Math.min(fillWidth, 75) + '%';
+
+  // 현재 단계 라벨 & 정보
+  const stageNames = ['항차 시작 전', '동해 향발 중', '동해 작업 중', '당진 향발 중', '당진 작업 중·항차 종료'];
+  const stageBadgeColors = ['#9aa', '#1c6fb8', '#1f9d55', '#1c6fb8', '#ff8c00'];
+  const stageIdx = Math.max(0, currentStage + 1);
+  const badge = document.getElementById('cycleStage');
+  badge.textContent = stageNames[stageIdx] || '대기';
+  badge.style.background = stageBadgeColors[stageIdx] || '#9aa';
+
+  // 다음 단계까지 남은 시간
+  const info = document.getElementById('cycleInfo');
+  if (next < 4 && stages[next] && stages[next].iso) {
+    const t = new Date(stages[next].iso);
+    if (!isNaN(t)) {
+      const diff = t - now;
+      if (diff > 0) {
+        const h = Math.floor(diff / 3600000);
+        const d = Math.floor(h / 24);
+        const remH = h % 24;
+        info.innerHTML = `다음 단계 <strong>${stages[next].label}</strong>까지 <strong>${d > 0 ? d+'일 ' : ''}${remH}시간</strong> 남음`;
+      } else {
+        info.innerHTML = `<strong>${stages[next].label}</strong> 시각이 지났습니다. 실제 시각을 입력하세요.`;
+      }
+    } else {
+      info.innerHTML = `<strong>${stages[next].label}</strong> 시각을 입력하세요`;
+    }
+  } else if (currentStage === 3) {
+    info.innerHTML = '✅ 항차 사이클 완료. "📦 항차 완료" 버튼으로 이력 보관 후 새 항차를 시작하세요.';
+  } else {
+    info.innerHTML = '항차 시작 시각을 입력하세요';
+  }
+}
+
+function openCycleModal() {
+  const c = data.cycle || {};
+  ['no','cargo','s1_text','s1_iso','s2_text','s2_iso','s3_text','s3_iso','s4_text','s4_iso'].forEach(k => {
+    const el = document.getElementById('cy_' + k);
+    if (el) el.value = c[k] || '';
+  });
+  document.getElementById('cycleModal').classList.add('open');
+}
+function closeCycleModal() { document.getElementById('cycleModal').classList.remove('open'); }
+function saveCycle() {
+  const c = {};
+  ['no','cargo','s1_text','s1_iso','s2_text','s2_iso','s3_text','s3_iso','s4_text','s4_iso'].forEach(k => {
+    const el = document.getElementById('cy_' + k);
+    if (el) c[k] = el.value;
+  });
+  data.cycle = c;
+  // 항차 사이클의 마지막 단계 ETA를 메인 ETA에도 동기화 (편의)
+  if (c.s4_text) data.eta = c.s4_text;
+  if (c.s4_iso) data.etaISO = c.s4_iso;
+  saveStorage();
+  closeCycleModal();
+  render();
+  showBanner('✅ 항차 사이클 저장됨', 'ok', 2000);
+}
+function archiveCycle() {
+  if (!confirm('현재 항차를 이력으로 보관하고 새 항차를 시작할까요?\n\n새 항차의 ① 당진 출항은 현재 항차의 ④ 당진 입항 이후로 자동 설정됩니다.')) return;
+  const history = loadHistory();
+  history.unshift({
+    completedAt: new Date().toLocaleDateString('ko-KR'),
+    voyageNo: data.cycle?.no || '',
+    ...data
+  });
+  saveHistory(history);
+  // 항차 번호 증가
+  const oldNo = data.cycle?.no || 'V-61';
+  const m = oldNo.match(/(\D*)(\d+)/);
+  const newNo = m ? `${m[1]}${parseInt(m[2]) + 1}` : 'V-?';
+  // 새 항차 초기화: 이전 항차 ④가 새 항차 ①이 됨
+  data.cycle = {
+    no: newNo,
+    cargo: data.cycle?.cargo || data.cargo || '',
+    s1_text: data.cycle?.s4_text || '',
+    s1_iso: data.cycle?.s4_iso || '',
+    s2_text: '', s2_iso: '',
+    s3_text: '', s3_iso: '',
+    s4_text: '', s4_iso: ''
+  };
+  saveStorage();
+  render();
+  showBanner(`📦 ${oldNo} 이력 보관 완료. 새 항차 ${newNo} 시작.`, 'ok', 3500);
+}
+
 // ===== Render =====
 function render() {
   document.getElementById('vesselSubtitle').textContent = `${data.depPort} → ${data.arrPort} · ${data.cargo || ''}`;
+  renderCycle();
   document.getElementById('voyageStatusBadge').textContent = data.status;
   document.getElementById('depPortName').textContent = `🟢 출발 · ${data.depPort}`;
   document.getElementById('arrPortName').textContent = `🔵 도착 · ${data.arrPort}`;
@@ -1201,6 +1575,274 @@ async function refreshWeather() {
 function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function escapeAttr(s) { return escapeHtml(s); }
 
+// ===== Email parser (5가지 메일 패턴 자동 인식) =====
+let parsedData = null;
+
+function openMailModal() {
+  document.getElementById('mailInput').value = '';
+  document.getElementById('parsedResult').innerHTML = '';
+  document.getElementById('applyParsedBtn').style.display = 'none';
+  parsedData = null;
+  document.getElementById('mailModal').classList.add('open');
+  setTimeout(() => document.getElementById('mailInput').focus(), 100);
+}
+function closeMailModal() { document.getElementById('mailModal').classList.remove('open'); }
+
+async function pasteFromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    document.getElementById('mailInput').value = text;
+    parseMail();
+  } catch(e) {
+    showBanner('클립보드 읽기 권한이 필요합니다. 텍스트 영역에 직접 Ctrl+V 해주세요.', 'warn', 3000);
+  }
+}
+
+function parseMail() {
+  const text = document.getElementById('mailInput').value;
+  if (!text.trim()) { showBanner('메일 본문을 붙여넣으세요', 'warn', 2000); return; }
+  const result = { source: 'unknown', extracted: {}, info: {} };
+
+  if (/DA-M-\d+|STARTED\s+(DRIFTING|SAILING|ANCHOR)/i.test(text)) {
+    result.source = '본선 - Drifting/Status Report';
+    parseShipDrift(text, result.extracted, result.info);
+  } else if (/DA-D-\d+|AV\.?\s*SPD.*FO.*DO|DIST['']?\s*MADE.*REMAINING/i.test(text)) {
+    result.source = '본선 - Daily Position Report';
+    parseShipDaily(text, result.extracted, result.info);
+  } else if (/WESTERN\s+SHIPPING|westship|PORT LOG|DISCH\/UPTTL|NO WORK DUE TO/i.test(text)) {
+    result.source = '당진 대리점 (웨스턴해운)';
+    parseWestern(text, result.extracted, result.info);
+  } else if (/CMC\s+Shipping|cmckorea|ET COMM|ET COMP|FIRST LINE SHORE|VESSEL['']?S STATUS/i.test(text)) {
+    result.source = '동해 대리점 (고려해운)';
+    parseKorea(text, result.extracted, result.info);
+  } else if (/HANDONG|HYUNDAI STEEL.*Line-up|Vessel Line-up|DAEJOO\s+ARIRANG\s+2[\s\S]{0,200}\d{1,2}\/[A-Z]{3}/i.test(text)) {
+    result.source = '한동쉬핑 LINE-UP';
+    parseHandong(text, result.extracted, result.info);
+  } else {
+    result.source = '인식 불가 - 일반 패턴으로 추출 시도';
+    parseGeneric(text, result.extracted, result.info);
+  }
+  parsedData = result;
+  showParsedResult(result);
+}
+
+function parseShipDrift(text, out, info) {
+  let m;
+  m = text.match(/STARTED\s+(\w+)/i);
+  if (m) out.status = m[1].toUpperCase();
+  m = text.match(/(\d{4})\s*HRS\s+(\d{1,2})(?:ST|ND|RD|TH)?\s+(\w+)/i);
+  if (m) {
+    out.bunkerTime = `${m[1]} HRS ${m[2]}TH ${m[3]}`;
+    const iso = toISODate(m[3], m[2], m[1]);
+    if (iso) info['보고시각 ISO'] = iso;
+  }
+  m = text.match(/PSN\s+([\d\-\.]+\s*[NS])\s+([\d\-\.]+\s*[EW])/i);
+  if (m) { out.lat = m[1].trim(); out.lon = m[2].trim(); }
+  // ROB - 더 견고한 정규식
+  m = text.match(/FO[\s\-:]+(\d+\.?\d*)\s*MT/i);
+  if (m) out.fo = parseFloat(m[1]);
+  m = text.match(/DO[\s\-:]+(\d+\.?\d*)\s*MT/i);
+  if (m) out.do = parseFloat(m[1]);
+  m = text.match(/FW[\s–\-:]+(\d+\.?\d*)\s*MT/i);
+  if (m) out.fw = parseFloat(m[1]);
+  // DRAFT (F x M, M x M, A x M 패턴)
+  m = text.match(/F\s+(\d+[\-\.]\d+)\s*M.*?M\s+(\d+[\-\.]\d+)\s*M.*?A\s+(\d+[\-\.]\d+)\s*M/i);
+  if (m) { out.draftF = m[1]; out.draftM = m[2]; out.draftA = m[3]; }
+  m = text.match(/REMARK\s*:\s*([\s\S]+?)(?=\n\s*\n|====|TO\s*:|Thanks|$)/i);
+  if (m) out.notes = m[1].trim().replace(/\s+/g, ' ').slice(0, 250);
+}
+
+function parseShipDaily(text, out, info) {
+  let m;
+  m = text.match(/DATE\s*:\s*(\d{4})\s*LT\s+(\d{1,2})(?:ST|ND|RD|TH)?\s+(\w+)/i);
+  if (m) out.bunkerTime = `${m[2]}/${m[3]} ${m[1]}LT`;
+  m = text.match(/PSN\s*:\s*([\d\-\.]+\s*N)\s*,?\s*([\d\-\.]+\s*E)/i);
+  if (m) { out.lat = m[1].trim(); out.lon = m[2].trim(); }
+  // ROB : FO / xx MT, DO / xx MT, FW / xx MT
+  m = text.match(/ROB[\s:]*FO\s*[\/\-:]\s*(\d+\.?\d*)\s*MT[\s,]*DO\s*[\/\-:]\s*(\d+\.?\d*)\s*MT[\s,]*FW\s*[\/\-:]\s*(\d+\.?\d*)/i);
+  if (m) { out.fo = parseFloat(m[1]); out.do = parseFloat(m[2]); out.fw = parseFloat(m[3]); }
+  // ETA DANGJIN
+  m = text.match(/ETA\s+DANGJIN\s*:\s*(\d{4})\s*HRS\s+(\d{1,2})(?:ST|ND|RD|TH)?\s+(\w+)/i);
+  if (m) {
+    out.eta = `${m[2]}/${m[3]} ${m[1]}`;
+    const iso = toISODate(m[3], m[2], m[1]);
+    if (iso) out.etaISO = iso;
+    out.status = 'SAILING';
+  }
+  m = text.match(/(\d+\.\d+)\s*KT/i);
+  if (m) info['평균 속력'] = m[1] + ' KT';
+  m = text.match(/WIND[^:]*:\s*(\w+)\s*\/\s*(\d+)/i);
+  if (m) info['풍향/풍속'] = `${m[1]}/${m[2]}`;
+  m = text.match(/(\d+)\s*\/\s*(\d+)\s*\/\s*([\d\.]+)\s*HRS/i);
+  if (m) info['항해거리'] = `진행 ${m[1]} / 남은 ${m[2]} NM, ${m[3]} HRS 예상`;
+}
+
+function parseWestern(text, out, info) {
+  let m;
+  // ARVL ROB FO/DO/FW
+  m = text.match(/ROB\s+FO\/DO\/FW\s+(\d+\.?\d*)\s*\/\s*(\d+\.?\d*)\s*\/\s*(\d+\.?\d*)/i);
+  if (m) { out.fo = parseFloat(m[1]); out.do = parseFloat(m[2]); out.fw = parseFloat(m[3]); }
+  m = text.match(/DRAFT\s+FWD\/AFT\s+(\d+\.?\d*)\s*\/\s*(\d+\.?\d*)/i);
+  if (m) { out.draftF = m[1]; out.draftA = m[2]; }
+  m = text.match(/ETD\s*:?\s*(\d{4})\s*LT\s+(\d{1,2})(?:ST|ND|RD|TH)?\s+(\w+)/i);
+  if (m) {
+    out.etd = `${m[2]}/${m[3]} ${m[1]}LT`;
+    const iso = toISODate(m[3], m[2], m[1]);
+    if (iso) out.etdISO = iso;
+  }
+  m = text.match(/CARGO\s+Q['']?TY\s*:\s*([\d,]+)\s*MT/i);
+  if (m) info['CARGO Q\'TY'] = m[1] + ' MT';
+  m = text.match(/BERTHED\s+AT\s+\w+\s+PIER\s+#?(\d+)/i);
+  if (m) info['BERTH'] = `#${m[1]}`;
+  const noWorkMatches = [...text.matchAll(/(\d{2}\/\d{2}\s+\d{4}LT[^:]*?):\s*NO WORK\s+DUE TO\s+([^.\n]+)/gi)];
+  if (noWorkMatches.length > 0) {
+    info['NO WORK 사유'] = noWorkMatches.map(mm => `${mm[1].trim()}: ${mm[2].trim()}`).join('; ');
+  }
+  // 일별 양하 (DISCH/UPTTL/BLNCD)
+  const dischMatches = [...text.matchAll(/(\d{2}\/\d{2}\s+\d{4}LT[^:]+?):\s*DISCH\/UPTTL\/BLNCD\s+([\d,]+)\s*\/\s*([\d,]+)\s*\/\s*([\d,]+)\s*MT/gi)];
+  if (dischMatches.length > 0) {
+    info['양하 진행'] = dischMatches.map(mm => `${mm[1].slice(0,5)}: ${mm[2]}MT (누적 ${mm[3]})`).join('; ');
+  }
+}
+
+function parseKorea(text, out, info) {
+  let m;
+  m = text.match(/ROB\s*:\s*FO\s*[\-:]\s*(\d+\.?\d*)\s*MT.*?DO\s*[\-:]\s*(\d+\.?\d*)\s*MT.*?FW\s*[\-:]\s*(\d+\.?\d*)\s*MT/i);
+  if (m) { out.fo = parseFloat(m[1]); out.do = parseFloat(m[2]); out.fw = parseFloat(m[3]); }
+  m = text.match(/DRAFT\s*:\s*F\s*[\-:]\s*(\d+\.?\d*)\s*M.*?A\s*[\-:]\s*(\d+\.?\d*)\s*M/i);
+  if (m) { out.draftF = m[1]; out.draftA = m[2]; }
+  m = text.match(/(\d{4})LT\s*:\s*ARRIVED AT DONGHAE/i);
+  if (m) { out.ata = m[1] + 'LT'; }
+  m = text.match(/ALL LINE MADE FAST.*?BERTH\s+NO\.\s*(\d+)/i);
+  if (m) { out.atb = `BERTH ${m[1]}`; info['BERTH'] = `NO.${m[1]}`; }
+  m = text.match(/(\d{4})LT\s*:\s*ET COMP\.?\s*LD/i);
+  if (m) { out.atd = m[1] + 'LT'; info['적하 완료'] = m[1] + 'LT'; }
+  m = text.match(/BL\s+Q['']?TY\s*:\s*([\d,]+)\s*MT/i);
+  if (m) info['BL Q\'TY'] = m[1] + ' MT';
+  m = text.match(/BALANCE\s*:\s*([\d,]+)\s*MT.*?TOTAL LD Q['']?TY\s*:\s*([\d,]+)\s*MT/i);
+  if (m) info['적하 잔량/완료'] = `잔량 ${m[1]} / 완료 ${m[2]} MT`;
+  m = text.match(/FRESH WATER SUPPLY\s*\((\d+)\s*MT\)\s*:\s*(\S+)/i);
+  if (m) info['청수 공급'] = `${m[1]} MT (${m[2]})`;
+}
+
+function parseHandong(text, out, info) {
+  const lines = text.split(/\n/);
+  for (const line of lines) {
+    if (/DAEJOO?\s+ARIRANG\s+2/i.test(line)) {
+      // 한 행에서 날짜+시각 토큰 3쌍 추출
+      const tokens = [...line.matchAll(/(\d{1,2}\/[A-Z]{3,})\s*(\d{4}|AM|PM)?/gi)];
+      if (tokens.length >= 1) {
+        out.eta = `${tokens[0][1]} ${tokens[0][2] || ''}`.trim();
+        if (/^\d{4}$/.test(tokens[0][2] || '')) {
+          const parts = tokens[0][1].split('/');
+          const iso = toISODate(parts[1], parts[0], tokens[0][2]);
+          if (iso) out.etaISO = iso;
+        }
+      }
+      if (tokens.length >= 2) {
+        out.etb = `${tokens[1][1]} ${tokens[1][2] || ''}`.trim();
+        if (/^\d{4}$/.test(tokens[1][2] || '')) {
+          const parts = tokens[1][1].split('/');
+          const iso = toISODate(parts[1], parts[0], tokens[1][2]);
+          if (iso) out.etbISO = iso;
+        }
+      }
+      if (tokens.length >= 3) out.etd = `${tokens[2][1]} ${tokens[2][2] || ''}`.trim();
+      const berth = line.match(/NO\.(\d+)/);
+      if (berth) info['Berth'] = `NO.${berth[1]}`;
+      const qty = line.match(/([\d,]+)\s*L\.?Stone|([\d,]+)\s*L/i);
+      if (qty) info['Cargo Q\'ty'] = (qty[1] || qty[2]) + ' MT';
+      return;
+    }
+  }
+  info['주의'] = 'DAEJOO ARIRANG 2 행을 찾지 못했습니다. 텍스트로 변환된 표가 필요합니다.';
+}
+
+function parseGeneric(text, out, info) {
+  let m;
+  m = text.match(/FO[\s\-:\/]+(\d+\.?\d*)\s*MT/i); if (m) out.fo = parseFloat(m[1]);
+  m = text.match(/DO[\s\-:\/]+(\d+\.?\d*)\s*MT/i); if (m) out.do = parseFloat(m[1]);
+  m = text.match(/FW[\s–\-:\/]+(\d+\.?\d*)\s*MT/i); if (m) out.fw = parseFloat(m[1]);
+  m = text.match(/ETA[^:]*:\s*([^\n]+)/i); if (m) out.eta = m[1].trim().slice(0, 30);
+  m = text.match(/PSN[^:]*:\s*([\d\-\.]+\s*[NS])\s+([\d\-\.]+\s*[EW])/i);
+  if (m) { out.lat = m[1]; out.lon = m[2]; }
+}
+
+function toISODate(monthName, day, hhmm) {
+  const months = {'JAN':1,'FEB':2,'MAR':3,'APR':4,'MAY':5,'JUN':6,'JUL':7,'AUG':8,'SEP':9,'OCT':10,'NOV':11,'DEC':12,
+                  '1월':1,'2월':2,'3월':3,'4월':4,'5월':5,'6월':6,'7월':7,'8월':8,'9월':9,'10월':10,'11월':11,'12월':12};
+  const mNum = months[String(monthName).toUpperCase().slice(0,3)] || months[monthName];
+  if (!mNum) return null;
+  const year = new Date().getFullYear();
+  const dd = String(day).padStart(2, '0');
+  const mm = String(mNum).padStart(2, '0');
+  const s = String(hhmm);
+  const hh = s.length >= 4 ? s.slice(0,2) : '00';
+  const mn = s.length >= 4 ? s.slice(2,4) : '00';
+  return `${year}-${mm}-${dd}T${hh}:${mn}`;
+}
+
+function showParsedResult(result) {
+  const el = document.getElementById('parsedResult');
+  const fields = result.extracted;
+  const keys = Object.keys(fields);
+  const infoKeys = Object.keys(result.info || {});
+  if (keys.length === 0 && infoKeys.length === 0) {
+    el.innerHTML = `<div style="padding:10px;background:#fff5f5;border:1px solid var(--danger);border-radius:6px;color:var(--danger);font-size:12px;">
+      ⚠️ 인식된 패턴: <strong>${escapeHtml(result.source)}</strong><br>
+      추출된 값이 없습니다. 메일 형식이 다르거나 본문이 너무 짧을 수 있습니다.
+    </div>`;
+    document.getElementById('applyParsedBtn').style.display = 'none';
+    return;
+  }
+  const labels = {
+    status: '상태', lat: '위도', lon: '경도',
+    fo: 'ROB FO (MT)', do: 'ROB DO (MT)', fw: 'ROB FW (MT)',
+    draftF: 'DRAFT F', draftM: 'DRAFT M', draftA: 'DRAFT A',
+    eta: 'ETA', etaISO: 'ETA 정확시각', etb: 'ETB', etbISO: 'ETB 정확시각',
+    etd: 'ETD', etdISO: 'ETD 정확시각',
+    ata: 'ATA', atb: 'ATB', atd: 'ATD',
+    bunkerTime: '보고 시각', notes: 'REMARK / 메모'
+  };
+  let html = `<div style="padding:10px;background:#e8f5e9;border:1px solid #81c784;border-radius:6px;font-size:13px;">
+    ✅ 인식된 패턴: <strong>${escapeHtml(result.source)}</strong><br>
+    아래 값들이 추출되었습니다. 확인 후 "적용" 버튼을 누르세요.
+  </div>`;
+  if (keys.length > 0) {
+    html += `<table style="width:100%;margin-top:10px;font-size:12px;border-collapse:collapse;">
+      <thead><tr><th style="text-align:left;padding:6px;border-bottom:2px solid var(--border);background:#f8fafc;">대시보드 필드</th><th style="text-align:left;padding:6px;border-bottom:2px solid var(--border);background:#f8fafc;">추출된 값</th></tr></thead><tbody>`;
+    for (const k of keys) {
+      html += `<tr><td style="padding:6px;border-bottom:1px solid var(--border);color:var(--muted);">${escapeHtml(labels[k] || k)}</td><td style="padding:6px;border-bottom:1px solid var(--border);font-family:monospace;color:var(--primary);font-weight:600;">${escapeHtml(fields[k])}</td></tr>`;
+    }
+    html += '</tbody></table>';
+  }
+  if (infoKeys.length > 0) {
+    html += '<div style="margin-top:10px;padding:10px;background:#fffbf0;border:1px solid #ffe082;border-radius:6px;font-size:11px;">';
+    html += '<strong style="color:#5a4500;">📌 참고 정보 (자동 적용 안 됨, 필요시 수동 입력하세요):</strong><br>';
+    for (const k of infoKeys) {
+      html += `<div style="margin-top:3px;"><span style="color:var(--muted);">${escapeHtml(k)}:</span> <span style="color:var(--text);font-family:monospace;">${escapeHtml(result.info[k])}</span></div>`;
+    }
+    html += '</div>';
+  }
+  el.innerHTML = html;
+  document.getElementById('applyParsedBtn').style.display = keys.length > 0 ? 'inline-block' : 'none';
+}
+
+function applyParsed() {
+  if (!parsedData) return;
+  const f = parsedData.extracted;
+  let applied = [];
+  for (const k of Object.keys(f)) {
+    if (k.startsWith('_')) continue;
+    data[k] = f[k];
+    applied.push(k);
+  }
+  saveStorage();
+  closeMailModal();
+  render();
+  showBanner(`✅ ${applied.length}개 필드 자동 입력 완료 (${parsedData.source})`, 'ok', 4000);
+}
+
 // ===== Auto fetch from data.json (Power Automate가 갱신) =====
 const REMOTE_DATA_URL = './data.json';   // 같은 폴더의 data.json (OneDrive/GitHub Pages 동일)
 const AUTO_FETCH_INTERVAL_MS = 5 * 60 * 1000;  // 5분마다
@@ -1230,15 +1872,76 @@ async function fetchRemoteData(manual = false) {
   }
 }
 
+// ===== Real-time clock & refresh =====
+function updateClock() {
+  const now = new Date();
+  const days = ['일','월','화','수','목','금','토'];
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mi = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  const day = days[now.getDay()];
+  const el = document.getElementById('nowTime');
+  if (el) el.textContent = `🕒 ${yyyy}-${mm}-${dd} (${day}) ${hh}:${mi}:${ss} KST`;
+}
+
+async function refreshAll() {
+  const btn = document.getElementById('refreshBtn');
+  if (btn) {
+    btn.classList.add('spinning');
+    setTimeout(() => btn.classList.remove('spinning'), 800);
+  }
+  showBanner('🔄 전체 새로고침 중...', 'ok', 1500);
+  try {
+    await fetchRemoteData(false);  // data.json 다시 가져오기 (없으면 조용히 무시)
+    await refreshWeather();         // 날씨 다시 가져오기
+    render();                       // 화면 다시 그리기
+    updateClock();
+    showBanner('✅ 새로고침 완료', 'ok', 1500);
+  } catch(e) {
+    showBanner('일부 새로고침 실패: ' + e.message, 'warn', 2500);
+  }
+}
+
+// Pull-to-refresh (모바일에서 위에서 아래로 당기면 새로고침)
+let touchStartY = 0;
+let pullDistance = 0;
+window.addEventListener('touchstart', e => {
+  if (window.scrollY === 0) touchStartY = e.touches[0].clientY;
+}, { passive: true });
+window.addEventListener('touchmove', e => {
+  if (window.scrollY === 0 && touchStartY > 0) {
+    pullDistance = e.touches[0].clientY - touchStartY;
+  }
+}, { passive: true });
+window.addEventListener('touchend', () => {
+  if (pullDistance > 100) refreshAll();
+  touchStartY = 0; pullDistance = 0;
+}, { passive: true });
+
 // ===== Init =====
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('logDate').value = new Date().toISOString().slice(0,10);
   render();
   refreshWeather();
-  setInterval(render, 60000);
-  // 자동 데이터 fetch
+  // 실시간 시계: 매 1초
+  updateClock();
+  setInterval(updateClock, 1000);
+  // 카운트다운/사이클 자동 갱신: 매 15초
+  setInterval(render, 15000);
+  // 데이터 자동 fetch: 페이지 로드시 + 5분마다
   fetchRemoteData(false);
   setInterval(() => fetchRemoteData(false), AUTO_FETCH_INTERVAL_MS);
+  // 페이지 다시 활성화 시 새로고침 (앱 백그라운드 → 다시 열 때)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      updateClock();
+      render();
+      fetchRemoteData(false);
+    }
+  });
   // PWA service worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
