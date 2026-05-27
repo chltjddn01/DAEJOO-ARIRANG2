@@ -580,40 +580,6 @@
 </div>
 
 <main>
-  <!-- 항차 사이클 (4단계: 당진ETD→동해ATA→동해ATD→당진ETA) -->
-  <div class="card col-12 cycle-card">
-    <h2>🔄 항차 사이클 <button class="mini-btn" onclick="openCycleModal()">편집</button></h2>
-    <div class="cycle-header">
-      <span class="vno" id="cycleVno">V-? · 동해 ↔ 당진 왕복 항차</span>
-      <span class="vstage" id="cycleStage">대기</span>
-    </div>
-    <div class="cycle-track">
-      <div class="cycle-line"></div>
-      <div class="cycle-line-fill" id="cycleLineFill" style="width:0%"></div>
-      <div class="cycle-stage" id="stage1" onclick="openCycleModal()">
-        <div class="dot">🚢</div>
-        <div class="label">① 당진 출항</div>
-        <div class="time" id="t1">-</div>
-      </div>
-      <div class="cycle-stage" id="stage2" onclick="openCycleModal()">
-        <div class="dot">⚓</div>
-        <div class="label">② 동해 입항·적하</div>
-        <div class="time" id="t2">-</div>
-      </div>
-      <div class="cycle-stage" id="stage3" onclick="openCycleModal()">
-        <div class="dot">🚢</div>
-        <div class="label">③ 동해 출항</div>
-        <div class="time" id="t3">-</div>
-      </div>
-      <div class="cycle-stage" id="stage4" onclick="openCycleModal()">
-        <div class="dot">🏁</div>
-        <div class="label">④ 당진 양하·출항(ETD)</div>
-        <div class="time" id="t4">-</div>
-      </div>
-    </div>
-    <div class="cycle-info" id="cycleInfo">항차 정보를 입력하세요</div>
-  </div>
-
   <!-- 항차 상태 -->
   <div class="card col-8">
     <h2>🚢 현재 항차 <span class="badge" id="voyageStatusBadge">DRIFTING</span></h2>
@@ -773,6 +739,12 @@
           <option>ANCHORED</option><option>BERTHED</option><option>DISCHARGING</option>
         </select>
       </div>
+      <div class="full" style="background:#f0f8ff;border:1px solid #b8d4f0;border-radius:5px;padding:8px;font-size:12px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text);font-weight:normal;margin:0;">
+          <input type="checkbox" id="f_statusAuto" style="width:auto;margin:0;">
+          <span><strong>🤖 상태 자동 판정 사용</strong> · ETA/ETB/ETD 시각이 지나면 자동으로 ANCHORED → BERTHED → SAILING으로 바뀜. DRIFTING/LOADING/DISCHARGING 같은 특수 상태는 수동 유지.</span>
+        </label>
+      </div>
     </div>
     <div class="form-section">
       <h3>🟢 출발항</h3>
@@ -832,56 +804,6 @@
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeEditModal()">취소</button>
       <button class="btn btn-primary" onclick="saveData()">저장</button>
-    </div>
-  </div>
-</div>
-
-<!-- 항차 사이클 편집 모달 -->
-<div class="modal-overlay" id="cycleModal">
-  <div class="modal">
-    <h2>🔄 항차 사이클 편집</h2>
-    <p style="font-size:12px;color:var(--muted);margin:0 0 12px 0;">
-      <strong>1항차</strong> = ① 당진 출항 → ② 동해 입항·적하 → ③ 동해 출항 → ④ <strong>당진 양하·출항(ETD)</strong>까지.<br>
-      ※ 당진 ETA = 장안서 앵커리지 도착 / ETB = 접안 / <strong>ETD = 양하 완료 후 출항 = 항차 종료점</strong>
-    </p>
-    <div class="form-grid">
-      <div><label>항차 번호</label><input type="text" id="cy_no" placeholder="V-61"></div>
-      <div><label>화물</label><input type="text" id="cy_cargo" placeholder="석회석 30,000MT"></div>
-    </div>
-    <div class="form-section">
-      <h3>① 당진 출항 (이전 양하 종료 → 항차 시작)</h3>
-      <div class="form-grid">
-        <div><label>실제 ATD (자유형식)</label><input type="text" id="cy_s1_text" placeholder="5/21 1000LT"></div>
-        <div><label>정확 시각 (선택)</label><input type="datetime-local" id="cy_s1_iso"></div>
-      </div>
-    </div>
-    <div class="form-section">
-      <h3>② 동해 입항·적하</h3>
-      <div class="form-grid">
-        <div><label>동해 ATA</label><input type="text" id="cy_s2_text" placeholder="5/23 0500LT"></div>
-        <div><label>정확 시각</label><input type="datetime-local" id="cy_s2_iso"></div>
-        <div class="full" style="font-size:11px;color:var(--muted);">접안/적하 완료 시각은 [동해 ATB / 적하 완료]에 자동 반영됩니다.</div>
-      </div>
-    </div>
-    <div class="form-section">
-      <h3>③ 동해 출항 (적하 종료 → 당진 향발)</h3>
-      <div class="form-grid">
-        <div><label>동해 ATD</label><input type="text" id="cy_s3_text" placeholder="5/24 1600LT"></div>
-        <div><label>정확 시각</label><input type="datetime-local" id="cy_s3_iso"></div>
-      </div>
-    </div>
-    <div class="form-section">
-      <h3>④ 당진 양하·출항 ETD (항차 종료점)</h3>
-      <div class="form-grid">
-        <div><label>당진 ETD (양하 완료 후 출항)</label><input type="text" id="cy_s4_text" placeholder="6/1 또는 6/2"></div>
-        <div><label>정확 시각</label><input type="datetime-local" id="cy_s4_iso"></div>
-        <div class="full" style="font-size:11px;color:var(--muted);">참고: 장안서 ETA / 접안 ETB는 메인 화면 도착항 카드에서 따로 관리됩니다. 사이클 ④는 항차 종료(=다음 항차 시작) 시점인 양하 후 출항만 기록합니다.</div>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-danger" onclick="archiveCycle()" style="margin-right:auto;">📦 항차 완료 → 이력으로 보관</button>
-      <button class="btn btn-secondary" onclick="closeCycleModal()">취소</button>
-      <button class="btn btn-primary" onclick="saveCycle()">저장</button>
     </div>
   </div>
 </div>
@@ -960,20 +882,8 @@ const STORAGE_KEY = 'daeju_arirang2_v2';
 const HISTORY_KEY = 'daeju_arirang2_history';
 
 const DEFAULT_DATA = {
-  // ⭐ 항차 사이클 (1항차 = 당진ETD → 동해ATA → 동해ATD → 당진ETD(양하후출항))
-  cycle: {
-    no: 'V-61',
-    cargo: '석회석 30,000MT',
-    s1_text: '5/21 1000LT',  // ① 이전 항차 당진 ETD (= 본 항차 시작)
-    s1_iso: '2026-05-21T10:00',
-    s2_text: '5/23 0500LT',  // ② 동해 입항
-    s2_iso: '2026-05-23T05:00',
-    s3_text: '5/24 1600LT',  // ③ 동해 출항
-    s3_iso: '2026-05-24T16:00',
-    s4_text: '6/1 또는 6/2', // ④ 당진 ETD (양하 완료 후 출항) - ETCD 기준
-    s4_iso: '2026-06-01T00:00'
-  },
   depPort: '동해', arrPort: '당진(장안서)', cargo: '석회석 30,000MT', status: 'DRIFTING',
+  statusAuto: true,  // 시각 기반 자동 판정 (DRIFTING/LOADING/DISCHARGING 특수 상태는 유지)
   ata: '5/23', atb: '5/23', atd: '5/24 1600', weekend: '유동적',
   eta: '26/MAY 1700', etaISO: '2026-05-26T17:00',
   etb: '26/MAY 1900', etbISO: '2026-05-26T19:00',
@@ -1025,131 +935,57 @@ function saveStorage() {
 function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; } }
 function saveHistory(arr) { localStorage.setItem(HISTORY_KEY, JSON.stringify(arr)); }
 
-// ===== Voyage Cycle =====
-function renderCycle() {
-  const c = data.cycle || {};
-  document.getElementById('cycleVno').textContent = `${c.no || 'V-?'} · ${c.cargo || data.cargo || ''} · 당진↔동해 왕복`;
-  const stages = [
-    { id: 'stage1', tId: 't1', text: c.s1_text, iso: c.s1_iso, label: '당진 출항' },
-    { id: 'stage2', tId: 't2', text: c.s2_text, iso: c.s2_iso, label: '동해 입항' },
-    { id: 'stage3', tId: 't3', text: c.s3_text, iso: c.s3_iso, label: '동해 출항' },
-    { id: 'stage4', tId: 't4', text: c.s4_text, iso: c.s4_iso, label: '당진 입항' }
-  ];
+// ===== Auto status detection =====
+// 도착항(당진) ETA/ETB/ETD 시각으로 현재 시각 비교해서 상태 자동 판정
+function autoDetectStatus() {
   const now = new Date();
-  let currentStage = -1; // -1: 아직 시작 안 함, 0~3: 해당 단계, 4: 완료
-  for (let i = 0; i < 4; i++) {
-    const st = stages[i];
-    document.getElementById(st.tId).textContent = st.text || '-';
-    const el = document.getElementById(st.id);
-    el.classList.remove('done', 'current');
-    if (st.iso) {
-      const t = new Date(st.iso);
-      if (!isNaN(t) && t <= now) {
-        el.classList.add('done');
-        currentStage = i;
-      }
-    }
+  // ETD 지남: 출항 후 항해 중 (다음 항차)
+  if (data.etdISO) {
+    const t = new Date(data.etdISO);
+    if (!isNaN(t) && now >= t) return 'SAILING';
   }
-  // 현재 단계 표시: 마지막으로 done된 다음 단계가 current
-  const next = currentStage + 1;
-  if (next >= 0 && next < 4) {
-    document.getElementById(stages[next].id).classList.remove('done');
-    document.getElementById(stages[next].id).classList.add('current');
+  // ETB 지남: 접안 (양하/적하 진행 중)
+  if (data.etbISO) {
+    const t = new Date(data.etbISO);
+    if (!isNaN(t) && now >= t) return 'BERTHED';
   }
-  // progress bar 너비
-  const totalCompleted = currentStage + 1; // 0~4
-  const fillWidth = (totalCompleted / 3) * 75;  // 75% = 25%씩 4구간
-  document.getElementById('cycleLineFill').style.width = Math.min(fillWidth, 75) + '%';
-
-  // 현재 단계 라벨 & 정보
-  const stageNames = ['항차 시작 전', '동해 향발 중', '동해 적하 중', '당진 향발 중·앵커리지·접안·양하', '항차 종료'];
-  const stageBadgeColors = ['#9aa', '#1c6fb8', '#1f9d55', '#ff8c00', '#1f9d55'];
-  const stageIdx = Math.max(0, currentStage + 1);
-  const badge = document.getElementById('cycleStage');
-  badge.textContent = stageNames[stageIdx] || '대기';
-  badge.style.background = stageBadgeColors[stageIdx] || '#9aa';
-
-  // 다음 단계까지 남은 시간
-  const info = document.getElementById('cycleInfo');
-  if (next < 4 && stages[next] && stages[next].iso) {
-    const t = new Date(stages[next].iso);
-    if (!isNaN(t)) {
-      const diff = t - now;
-      if (diff > 0) {
-        const h = Math.floor(diff / 3600000);
-        const d = Math.floor(h / 24);
-        const remH = h % 24;
-        info.innerHTML = `다음 단계 <strong>${stages[next].label}</strong>까지 <strong>${d > 0 ? d+'일 ' : ''}${remH}시간</strong> 남음`;
-      } else {
-        info.innerHTML = `<strong>${stages[next].label}</strong> 시각이 지났습니다. 실제 시각을 입력하세요.`;
-      }
-    } else {
-      info.innerHTML = `<strong>${stages[next].label}</strong> 시각을 입력하세요`;
-    }
-  } else if (currentStage === 3) {
-    info.innerHTML = '✅ 항차 사이클 완료. "📦 항차 완료" 버튼으로 이력 보관 후 새 항차를 시작하세요.';
-  } else {
-    info.innerHTML = '항차 시작 시각을 입력하세요';
+  // ETA 지남: 앵커리지 대기
+  if (data.etaISO) {
+    const t = new Date(data.etaISO);
+    if (!isNaN(t) && now >= t) return 'ANCHORED';
   }
+  // 출발항 ATD가 있으면 항해 중
+  if (data.atd && data.atd !== '-' && data.atd !== '') return 'SAILING';
+  return null;  // 자동 판정 불가 (수동 입력 유지)
 }
 
-function openCycleModal() {
-  const c = data.cycle || {};
-  ['no','cargo','s1_text','s1_iso','s2_text','s2_iso','s3_text','s3_iso','s4_text','s4_iso'].forEach(k => {
-    const el = document.getElementById('cy_' + k);
-    if (el) el.value = c[k] || '';
-  });
-  document.getElementById('cycleModal').classList.add('open');
-}
-function closeCycleModal() { document.getElementById('cycleModal').classList.remove('open'); }
-function saveCycle() {
-  const c = {};
-  ['no','cargo','s1_text','s1_iso','s2_text','s2_iso','s3_text','s3_iso','s4_text','s4_iso'].forEach(k => {
-    const el = document.getElementById('cy_' + k);
-    if (el) c[k] = el.value;
-  });
-  data.cycle = c;
-  // 항차 사이클의 마지막 단계 ETA를 메인 ETA에도 동기화 (편의)
-  if (c.s4_text) data.eta = c.s4_text;
-  if (c.s4_iso) data.etaISO = c.s4_iso;
-  saveStorage();
-  closeCycleModal();
-  render();
-  showBanner('✅ 항차 사이클 저장됨', 'ok', 2000);
-}
-function archiveCycle() {
-  if (!confirm('현재 항차를 이력으로 보관하고 새 항차를 시작할까요?\n\n새 항차의 ① 당진 출항은 현재 항차의 ④ 당진 입항 이후로 자동 설정됩니다.')) return;
-  const history = loadHistory();
-  history.unshift({
-    completedAt: new Date().toLocaleDateString('ko-KR'),
-    voyageNo: data.cycle?.no || '',
-    ...data
-  });
-  saveHistory(history);
-  // 항차 번호 증가
-  const oldNo = data.cycle?.no || 'V-61';
-  const m = oldNo.match(/(\D*)(\d+)/);
-  const newNo = m ? `${m[1]}${parseInt(m[2]) + 1}` : 'V-?';
-  // 새 항차 초기화: 이전 항차 ④가 새 항차 ①이 됨
-  data.cycle = {
-    no: newNo,
-    cargo: data.cycle?.cargo || data.cargo || '',
-    s1_text: data.cycle?.s4_text || '',
-    s1_iso: data.cycle?.s4_iso || '',
-    s2_text: '', s2_iso: '',
-    s3_text: '', s3_iso: '',
-    s4_text: '', s4_iso: ''
-  };
-  saveStorage();
-  render();
-  showBanner(`📦 ${oldNo} 이력 보관 완료. 새 항차 ${newNo} 시작.`, 'ok', 3500);
+function applyAutoStatus() {
+  if (data.statusAuto === false) return;  // 자동 모드 꺼져 있으면 skip
+  const auto = autoDetectStatus();
+  if (!auto) return;
+  // LOADING/DISCHARGING은 작업 진행 중 상태라 명시값 우선 (단 ETD 지나면 SAILING으로)
+  if (['LOADING', 'DISCHARGING'].includes(data.status) && auto !== 'SAILING') {
+    return;
+  }
+  // DRIFTING, ANCHORED, BERTHED, SAILING은 자동 판정으로 덮어씀
+  if (auto !== data.status) {
+    data.status = auto;
+    saveStorage();
+  }
 }
 
 // ===== Render =====
 function render() {
+  applyAutoStatus();  // 매 render 시 상태 자동 판정
   document.getElementById('vesselSubtitle').textContent = `${data.depPort} → ${data.arrPort} · ${data.cargo || ''}`;
-  renderCycle();
-  document.getElementById('voyageStatusBadge').textContent = data.status;
+  const statusBadge = document.getElementById('voyageStatusBadge');
+  statusBadge.textContent = data.status + (data.statusAuto !== false ? ' (자동)' : '');
+  statusBadge.title = data.statusAuto !== false
+    ? '자동 판정: ETA/ETB/ETD 시각 기반. 수정 모달에서 끌 수 있음'
+    : '수동 모드: 명시값 유지';
+  // 상태별 색상
+  const stColors = { DRIFTING: '#e0a800', SAILING: '#1c6fb8', ANCHORED: '#1f9d55', BERTHED: '#ff8c00', LOADING: '#1f9d55', DISCHARGING: '#ff8c00' };
+  statusBadge.style.background = stColors[data.status] || '#ff8c00';
   document.getElementById('depPortName').textContent = `🟢 출발 · ${data.depPort}`;
   document.getElementById('arrPortName').textContent = `🔵 도착 · ${data.arrPort}`;
   document.getElementById('depAta').textContent = data.ata || '-';
@@ -1481,6 +1317,8 @@ function openEditModal() {
   ['depPort','arrPort','cargo','status','ata','atb','atd','weekend','eta','etaISO','etb','etbISO','etd','etdISO',
    'fo','do','fw','bunkerTime','foThreshold','doThreshold','draftF','draftM','draftA','lat','lon','notes']
     .forEach(k => { const el = document.getElementById('f_' + k); if (el) el.value = data[k] ?? ''; });
+  // 자동 상태 모드 체크박스
+  document.getElementById('f_statusAuto').checked = data.statusAuto !== false;
   document.getElementById('editModal').classList.add('open');
 }
 function closeEditModal() { document.getElementById('editModal').classList.remove('open'); }
@@ -1493,6 +1331,7 @@ function saveData() {
     if (['fo','do','fw','foThreshold','doThreshold'].includes(k)) v = v === '' ? null : Number(v);
     data[k] = v;
   }
+  data.statusAuto = document.getElementById('f_statusAuto').checked;
   saveStorage(); closeEditModal(); render();
 }
 
@@ -1758,20 +1597,15 @@ function parseWestern(text, out, info) {
     const iso = toISODate(m[3], m[2], m[1]);
     if (iso) out.etdISO = iso;
   }
-  // ⭐ ETCD (양하 완료 예정 = 당진 출항 = 사이클 ④ = 항차 종료점)
+  // ⭐ ETCD (양하 완료 예정 = 당진 ETD)
   m = text.match(/ET\.?\s*C\.?\s*D\.?\s*:?\s*(\d{1,2})(?:ST|ND|RD|TH)?(?:\s+OR\s+(\d{1,2})(?:ST|ND|RD|TH)?)?\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)/i);
   if (m) {
     const day1 = m[1], day2 = m[2], mon = m[3];
     const etcdStr = day2 ? `${day1} 또는 ${day2}/${mon}` : `${day1}/${mon}`;
-    info['🏁 ETCD (양하 완료 → 당진 ETD)'] = etcdStr;
-    // 사이클 ④ + 메인 ETD 둘 다 갱신
+    info['🏁 ETCD (양하 완료 예정)'] = etcdStr;
     out.etd = etcdStr;
     const iso = toISODate(mon, day1, '0000');
-    if (iso) {
-      out.etdISO = iso;
-      out.cycle_s4_text = etcdStr;
-      out.cycle_s4_iso = iso;
-    }
+    if (iso) out.etdISO = iso;
   }
 
   // ⭐ REMARK
@@ -1805,15 +1639,11 @@ function parseKorea(text, out, info) {
   if (m) { out.draftF = m[1]; out.draftA = m[2]; }
 
   // ⭐ 동해 ATA - 날짜+시각 멀티라인 패턴
-  // "23RD MAY. 2026\n0500LT : ARRIVED AT DONGHAE"
   m = text.match(/(\d{1,2})(?:ST|ND|RD|TH)?\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[\.\s,]*\d{0,4}[\s\S]{0,60}?(\d{4})LT\s*:\s*ARRIVED AT DONGHAE/i);
   if (m) {
     const dayMonth = `${m[1]}/${m[2].slice(0,3).toUpperCase()}`;
     const dt = `${dayMonth} ${m[3]}LT`;
     out.ata = dt;
-    out.cycle_s2_text = dt;
-    const iso = toISODate(m[2], m[1], m[3]);
-    if (iso) out.cycle_s2_iso = iso;
     out.depPort = '동해';
     out.status = 'BERTHED';
   } else {
@@ -1825,16 +1655,13 @@ function parseKorea(text, out, info) {
   m = text.match(/ALL LINE MADE FAST.*?BERTH\s+NO\.\s*(\d+)/i);
   if (m) { out.atb = `BERTH ${m[1]}`; info['BERTH'] = `NO.${m[1]}`; }
 
-  // ⭐ 동해 적하 완료 (ET COMP. LD) → cycle.s3 (동해 출항 시점)
+  // ⭐ 동해 적하 완료 (ET COMP. LD)
   m = text.match(/(\d{1,2})(?:ST|ND|RD|TH)?\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[\.\s,]*\d{0,4}[\s\S]{0,60}?(\d{4})LT\s*:\s*ET\s+COMP\.?\s*LD/i);
   if (m) {
     const dayMonth = `${m[1]}/${m[2].slice(0,3).toUpperCase()}`;
     const dt = `${dayMonth} ${m[3]}LT`;
     info['적하 완료'] = dt;
-    // 적하 완료 시각을 동해 출항 후보로 (실제 출항 시각이 별도 있으면 그게 우선)
-    out.cycle_s3_text = dt;
-    const iso = toISODate(m[2], m[1], m[3]);
-    if (iso) out.cycle_s3_iso = iso;
+    out.atd = dt;
   } else {
     m = text.match(/(\d{4})LT\s*:\s*ET COMP\.?\s*LD/i);
     if (m) { out.atd = m[1] + 'LT'; info['적하 완료'] = m[1] + 'LT'; }
@@ -1944,10 +1771,6 @@ function showParsedResult(result) {
     ata: 'ATA', atb: 'ATB', atd: 'ATD',
     depPort: '출발항', arrPort: '도착항',
     bunkerTime: '보고 시각', notes: 'REMARK / 메모',
-    cycle_s1_text: '🔄 항차① 당진 출항(ETD)', cycle_s1_iso: '🔄 항차① 정확시각',
-    cycle_s2_text: '🔄 항차② 동해 입항(ATA)', cycle_s2_iso: '🔄 항차② 정확시각',
-    cycle_s3_text: '🔄 항차③ 동해 출항(ATD)', cycle_s3_iso: '🔄 항차③ 정확시각',
-    cycle_s4_text: '🔄 항차④ 당진 양하·출항(ETD)', cycle_s4_iso: '🔄 항차④ 정확시각'
   };
   let html = `<div style="padding:10px;background:#e8f5e9;border:1px solid #81c784;border-radius:6px;font-size:13px;">
     ✅ 인식된 패턴: <strong>${escapeHtml(result.source)}</strong><br>
@@ -1987,16 +1810,9 @@ function applyParsed() {
       continue;
     }
     if (k.startsWith('_')) continue;
-    // cycle 관련 필드는 data.cycle에 매핑
-    if (k.startsWith('cycle_')) {
-      const cycleKey = k.replace('cycle_', '');
-      data.cycle = data.cycle || {};
-      data.cycle[cycleKey] = f[k];
-      applied.push(`사이클.${cycleKey}`);
-    } else {
-      data[k] = f[k];
-      applied.push(k);
-    }
+    if (k.startsWith('cycle_')) continue;  // 사이클 카드 제거됨, 무시
+    data[k] = f[k];
+    applied.push(k);
   }
   saveStorage();
   closeMailModal();
