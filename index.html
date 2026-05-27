@@ -606,8 +606,8 @@
         <div class="time" id="t3">-</div>
       </div>
       <div class="cycle-stage" id="stage4" onclick="openCycleModal()">
-        <div class="dot">⚓</div>
-        <div class="label">④ 당진 입항·양하</div>
+        <div class="dot">🏁</div>
+        <div class="label">④ 당진 양하·출항(ETD)</div>
         <div class="time" id="t4">-</div>
       </div>
     </div>
@@ -781,7 +781,13 @@
         <div><label>ATB</label><input type="text" id="f_atb"></div>
         <div><label>ATD</label><input type="text" id="f_atd"></div>
         <div><label>주말/공휴일 작업</label>
-          <select id="f_weekend"><option>O</option><option>X</option><option>-</option></select>
+          <select id="f_weekend">
+            <option value="O">O (작업 확정)</option>
+            <option value="X">X (작업 안함)</option>
+            <option value="유동적">유동적 (할 수도, 안할 수도)</option>
+            <option value="확정 대기">확정 대기</option>
+            <option value="-">기재 없음</option>
+          </select>
         </div>
       </div>
     </div>
@@ -835,8 +841,8 @@
   <div class="modal">
     <h2>🔄 항차 사이클 편집</h2>
     <p style="font-size:12px;color:var(--muted);margin:0 0 12px 0;">
-      1항차 = 당진 출항 → 동해 입항 → 동해 출항 → 당진 입항 (왕복 한 사이클).<br>
-      현재 위치는 입력된 시각으로 자동 판정됩니다.
+      <strong>1항차</strong> = ① 당진 출항 → ② 동해 입항·적하 → ③ 동해 출항 → ④ <strong>당진 양하·출항(ETD)</strong>까지.<br>
+      ※ 당진 ETA = 장안서 앵커리지 도착 / ETB = 접안 / <strong>ETD = 양하 완료 후 출항 = 항차 종료점</strong>
     </p>
     <div class="form-grid">
       <div><label>항차 번호</label><input type="text" id="cy_no" placeholder="V-61"></div>
@@ -865,10 +871,11 @@
       </div>
     </div>
     <div class="form-section">
-      <h3>④ 당진 입항·양하 (항차 종료점)</h3>
+      <h3>④ 당진 양하·출항 ETD (항차 종료점)</h3>
       <div class="form-grid">
-        <div><label>당진 ETA / ATA</label><input type="text" id="cy_s4_text" placeholder="5/26 1700"></div>
+        <div><label>당진 ETD (양하 완료 후 출항)</label><input type="text" id="cy_s4_text" placeholder="6/1 또는 6/2"></div>
         <div><label>정확 시각</label><input type="datetime-local" id="cy_s4_iso"></div>
+        <div class="full" style="font-size:11px;color:var(--muted);">참고: 장안서 ETA / 접안 ETB는 메인 화면 도착항 카드에서 따로 관리됩니다. 사이클 ④는 항차 종료(=다음 항차 시작) 시점인 양하 후 출항만 기록합니다.</div>
       </div>
     </div>
     <div class="modal-actions">
@@ -953,21 +960,21 @@ const STORAGE_KEY = 'daeju_arirang2_v2';
 const HISTORY_KEY = 'daeju_arirang2_history';
 
 const DEFAULT_DATA = {
-  // ⭐ 항차 사이클 (1항차 = 당진ETD → 동해ATA → 동해ATD → 당진ATA)
+  // ⭐ 항차 사이클 (1항차 = 당진ETD → 동해ATA → 동해ATD → 당진ETD(양하후출항))
   cycle: {
     no: 'V-61',
     cargo: '석회석 30,000MT',
-    s1_text: '5/21 1000LT',  // 이전 항차 당진 출항 (= 본 항차 시작)
+    s1_text: '5/21 1000LT',  // ① 이전 항차 당진 ETD (= 본 항차 시작)
     s1_iso: '2026-05-21T10:00',
-    s2_text: '5/23 0500LT',  // 동해 입항
+    s2_text: '5/23 0500LT',  // ② 동해 입항
     s2_iso: '2026-05-23T05:00',
-    s3_text: '5/24 1600LT',  // 동해 출항
+    s3_text: '5/24 1600LT',  // ③ 동해 출항
     s3_iso: '2026-05-24T16:00',
-    s4_text: '5/26 1700',    // 당진 입항 예정
-    s4_iso: '2026-05-26T17:00'
+    s4_text: '6/1 또는 6/2', // ④ 당진 ETD (양하 완료 후 출항) - ETCD 기준
+    s4_iso: '2026-06-01T00:00'
   },
   depPort: '동해', arrPort: '당진(장안서)', cargo: '석회석 30,000MT', status: 'DRIFTING',
-  ata: '5/23', atb: '5/23', atd: '5/24 1600', weekend: 'O',
+  ata: '5/23', atb: '5/23', atd: '5/24 1600', weekend: '유동적',
   eta: '26/MAY 1700', etaISO: '2026-05-26T17:00',
   etb: '26/MAY 1900', etbISO: '2026-05-26T19:00',
   etd: '01/JUN', etdISO: '2026-06-01T00:00',
@@ -1055,8 +1062,8 @@ function renderCycle() {
   document.getElementById('cycleLineFill').style.width = Math.min(fillWidth, 75) + '%';
 
   // 현재 단계 라벨 & 정보
-  const stageNames = ['항차 시작 전', '동해 향발 중', '동해 작업 중', '당진 향발 중', '당진 작업 중·항차 종료'];
-  const stageBadgeColors = ['#9aa', '#1c6fb8', '#1f9d55', '#1c6fb8', '#ff8c00'];
+  const stageNames = ['항차 시작 전', '동해 향발 중', '동해 적하 중', '당진 향발 중·앵커리지·접안·양하', '항차 종료'];
+  const stageBadgeColors = ['#9aa', '#1c6fb8', '#1f9d55', '#ff8c00', '#1f9d55'];
   const stageIdx = Math.max(0, currentStage + 1);
   const badge = document.getElementById('cycleStage');
   badge.textContent = stageNames[stageIdx] || '대기';
@@ -1148,7 +1155,15 @@ function render() {
   document.getElementById('depAta').textContent = data.ata || '-';
   document.getElementById('depAtb').textContent = data.atb || '-';
   document.getElementById('depAtd').textContent = data.atd || '-';
-  document.getElementById('depExtra').textContent = data.weekend ? `주말/공휴일 작업: ${data.weekend}` : '';
+  // 주말 작업 표시 (값에 따라 아이콘 변경)
+  const wkMap = {
+    'O': '✅ 주말/공휴일 작업 가능',
+    'X': '🚫 주말/공휴일 작업 안함',
+    '유동적': '🎲 주말/공휴일 작업 유동적',
+    '확정 대기': '⏳ 주말/공휴일 작업 확정 대기',
+    '-': '주말/공휴일 작업: 미기재'
+  };
+  document.getElementById('depExtra').textContent = data.weekend ? (wkMap[data.weekend] || `주말/공휴일 작업: ${data.weekend}`) : '';
   document.getElementById('arrEta').innerHTML = (data.eta || '-') + countdownBadge(data.etaISO);
   document.getElementById('arrEtb').innerHTML = (data.etb || '-') + countdownBadge(data.etbISO);
   document.getElementById('arrEtd').innerHTML = (data.etd || '-') + countdownBadge(data.etdISO);
@@ -1609,10 +1624,10 @@ function parseMail() {
   } else if (/DA-D-\d+|AV\.?\s*SPD.*FO.*DO|DIST['']?\s*MADE.*REMAINING/i.test(text)) {
     result.source = '본선 - Daily Position Report';
     parseShipDaily(text, result.extracted, result.info);
-  } else if (/WESTERN\s+SHIPPING|westship|PORT LOG|DISCH\/UPTTL|NO WORK DUE TO/i.test(text)) {
+  } else if (/WESTERN\s+SHIPPING|westship|PORT LOG|DISCH\/UPTTL|NO WORK DUE TO|ARRVD?\s+AT\s+DANGJIN|BERTHED\s+AT\s+\w+\s+PIER|ETCD|ARVL\.?\s+CONDITIONS/i.test(text)) {
     result.source = '당진 대리점 (웨스턴해운)';
     parseWestern(text, result.extracted, result.info);
-  } else if (/CMC\s+Shipping|cmckorea|ET COMM|ET COMP|FIRST LINE SHORE|VESSEL['']?S STATUS/i.test(text)) {
+  } else if (/CMC\s+Shipping|cmckorea|ET COMM|ET COMP|FIRST LINE SHORE|VESSEL['']?S STATUS|ARRIVED AT DONGHAE|BL\s+Q['']?TY/i.test(text)) {
     result.source = '동해 대리점 (고려해운)';
     parseKorea(text, result.extracted, result.info);
   } else if (/HANDONG|HYUNDAI STEEL.*Line-up|Vessel Line-up|DAEJOO\s+ARIRANG\s+2[\s\S]{0,200}\d{1,2}\/[A-Z]{3}/i.test(text)) {
@@ -1679,44 +1694,156 @@ function parseShipDaily(text, out, info) {
 
 function parseWestern(text, out, info) {
   let m;
-  // ARVL ROB FO/DO/FW
+  // ROB FO/DO/FW
   m = text.match(/ROB\s+FO\/DO\/FW\s+(\d+\.?\d*)\s*\/\s*(\d+\.?\d*)\s*\/\s*(\d+\.?\d*)/i);
   if (m) { out.fo = parseFloat(m[1]); out.do = parseFloat(m[2]); out.fw = parseFloat(m[3]); }
+  // DRAFT FWD/AFT
   m = text.match(/DRAFT\s+FWD\/AFT\s+(\d+\.?\d*)\s*\/\s*(\d+\.?\d*)/i);
   if (m) { out.draftF = m[1]; out.draftA = m[2]; }
-  m = text.match(/ETD\s*:?\s*(\d{4})\s*LT\s+(\d{1,2})(?:ST|ND|RD|TH)?\s+(\w+)/i);
+  // CARGO Q'TY
+  m = text.match(/CARGO\s+Q['']?TY\s*:\s*([\d,]+)\s*MT/i);
+  if (m) info['CARGO Q\'TY'] = m[1] + ' MT';
+
+  // ⭐ 당진 도착 (ARRVD AT DANGJIN PORT) = 장안서 앵커리지 도착 = ETA (사이클 매핑 X)
+  m = text.match(/(\d{2}\/\d{2})\s+(\d{4})\s*:\s*ARRVD?\s+AT\s+DANGJIN/i);
+  if (m) {
+    const dt = `${m[1]} ${m[2]}LT`;
+    const iso = mmddhhmmToISO(m[1], m[2]);
+    out.eta = dt;
+    if (iso) out.etaISO = iso;
+    out.status = 'ANCHORED';
+    out.arrPort = '당진(장안서)';
+    info['📍 장안서 앵커리지 ETA'] = dt;
+  }
+
+  // ⭐ 당진 접안 (BERTHED AT HYUNDAI PIER #08) = ETB (사이클 매핑 X)
+  m = text.match(/(\d{2}\/\d{2})\s+(\d{4})\s*:\s*BERTHED?\s+AT\s+(\w+)\s+PIER\s+#?(\d+)/i);
+  if (m) {
+    const dt = `${m[1]} ${m[2]}LT`;
+    const iso = mmddhhmmToISO(m[1], m[2]);
+    out.etb = dt;
+    if (iso) out.etbISO = iso;
+    info['🏗️ 접안 ETB'] = `${dt} @ ${m[3]} PIER #${m[4]}`;
+    info['BERTH'] = `${m[3]} PIER #${m[4]}`;
+    out.status = 'BERTHED';
+  } else {
+    m = text.match(/BERTHED\s+AT\s+(\w+)\s+PIER\s+#?(\d+)/i);
+    if (m) info['BERTH'] = `${m[1]} PIER #${m[2]}`;
+  }
+
+  // ⭐ ALL LINE MADE FAST
+  m = text.match(/(\d{2}\/\d{2})\s+(\d{4})\s*:\s*ALL\s+LINE\s+MADE\s+FAST/i);
+  if (m) info['ALL LINE FAST'] = `${m[1]} ${m[2]}LT`;
+
+  // ⭐ 양하/적하 개시 예정 (ET COMM/COMMENCEG DISCH) - 오타 포함 대응
+  m = text.match(/(\d{2}\/\d{2})\s+(\w+)\s*:\s*ET[\.,\s]*COMMEN?CE?(?:D|G)?\s+(DISCH|LD)/i);
+  if (m) {
+    const op = /DISCH/i.test(m[3]) ? '양하' : '적하';
+    info[`${op} 개시 예정`] = `${m[1]} ${m[2]}`;
+  }
+  // 양하 개시 완료된 시각
+  m = text.match(/(\d{2}\/\d{2})\s+(\d{4})LT?\s*:\s*COMMENCED?\s+DISCH/i);
+  if (m) {
+    info['양하 개시'] = `${m[1]} ${m[2]}LT`;
+    out.status = 'DISCHARGING';
+  }
+  // 양하 완료
+  m = text.match(/(\d{2}\/\d{2})\s+(\d{4})LT?\s*:\s*COMPLETED?\s+DISCH/i);
+  if (m) info['양하 완료'] = `${m[1]} ${m[2]}LT`;
+
+  // ⭐ ETD (정확 시각) - 1700 LT 21ST MAY
+  m = text.match(/(?:^|\s)ETD\s*:?\s*(\d{4})\s*LT\s+(\d{1,2})(?:ST|ND|RD|TH)?\s+(\w+)/im);
   if (m) {
     out.etd = `${m[2]}/${m[3]} ${m[1]}LT`;
     const iso = toISODate(m[3], m[2], m[1]);
     if (iso) out.etdISO = iso;
   }
-  m = text.match(/CARGO\s+Q['']?TY\s*:\s*([\d,]+)\s*MT/i);
-  if (m) info['CARGO Q\'TY'] = m[1] + ' MT';
-  m = text.match(/BERTHED\s+AT\s+\w+\s+PIER\s+#?(\d+)/i);
-  if (m) info['BERTH'] = `#${m[1]}`;
+  // ⭐ ETCD (양하 완료 예정 = 당진 출항 = 사이클 ④ = 항차 종료점)
+  m = text.match(/ET\.?\s*C\.?\s*D\.?\s*:?\s*(\d{1,2})(?:ST|ND|RD|TH)?(?:\s+OR\s+(\d{1,2})(?:ST|ND|RD|TH)?)?\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)/i);
+  if (m) {
+    const day1 = m[1], day2 = m[2], mon = m[3];
+    const etcdStr = day2 ? `${day1} 또는 ${day2}/${mon}` : `${day1}/${mon}`;
+    info['🏁 ETCD (양하 완료 → 당진 ETD)'] = etcdStr;
+    // 사이클 ④ + 메인 ETD 둘 다 갱신
+    out.etd = etcdStr;
+    const iso = toISODate(mon, day1, '0000');
+    if (iso) {
+      out.etdISO = iso;
+      out.cycle_s4_text = etcdStr;
+      out.cycle_s4_iso = iso;
+    }
+  }
+
+  // ⭐ REMARK
+  m = text.match(/REMARK\.?\s*[\r\n]+\s*[\-\s]*([\s\S]+?)(?=\n\s*\n|\d+\.\s|$)/i);
+  if (m) {
+    out.notes = m[1].trim().replace(/^\-\s*/, '').replace(/\s+/g, ' ').slice(0, 250);
+  }
+
+  // NO WORK 사유
   const noWorkMatches = [...text.matchAll(/(\d{2}\/\d{2}\s+\d{4}LT[^:]*?):\s*NO WORK\s+DUE TO\s+([^.\n]+)/gi)];
   if (noWorkMatches.length > 0) {
     info['NO WORK 사유'] = noWorkMatches.map(mm => `${mm[1].trim()}: ${mm[2].trim()}`).join('; ');
   }
-  // 일별 양하 (DISCH/UPTTL/BLNCD)
-  const dischMatches = [...text.matchAll(/(\d{2}\/\d{2}\s+\d{4}LT[^:]+?):\s*DISCH\/UPTTL\/BLNCD\s+([\d,]+)\s*\/\s*([\d,]+)\s*\/\s*([\d,]+)\s*MT/gi)];
+  // 일별 양하 진행
+  const dischMatches = [...text.matchAll(/(\d{2}\/\d{2}(?:\s+\d{4}LT)?[^:]*?):\s*DISCH\/UPTTL\/BLNCD\s+([\d,]+)\s*\/\s*([\d,]+)\s*\/\s*([\d,]+)\s*MT/gi)];
   if (dischMatches.length > 0) {
-    info['양하 진행'] = dischMatches.map(mm => `${mm[1].slice(0,5)}: ${mm[2]}MT (누적 ${mm[3]})`).join('; ');
+    info['양하 진행'] = dischMatches.map(mm => `${mm[1].slice(0,15).trim()}: ${mm[2]}MT (누적 ${mm[3]}, 잔량 ${mm[4]})`).join('; ');
+    // 가장 최근 누적량을 cargo_discharging.done에 자동 반영
+    const last = dischMatches[dischMatches.length - 1];
+    const totalDone = parseInt(last[3].replace(/,/g, ''));
+    if (!isNaN(totalDone)) out._cargo_done = totalDone;
   }
 }
 
 function parseKorea(text, out, info) {
   let m;
+  // ROB
   m = text.match(/ROB\s*:\s*FO\s*[\-:]\s*(\d+\.?\d*)\s*MT.*?DO\s*[\-:]\s*(\d+\.?\d*)\s*MT.*?FW\s*[\-:]\s*(\d+\.?\d*)\s*MT/i);
   if (m) { out.fo = parseFloat(m[1]); out.do = parseFloat(m[2]); out.fw = parseFloat(m[3]); }
   m = text.match(/DRAFT\s*:\s*F\s*[\-:]\s*(\d+\.?\d*)\s*M.*?A\s*[\-:]\s*(\d+\.?\d*)\s*M/i);
   if (m) { out.draftF = m[1]; out.draftA = m[2]; }
-  m = text.match(/(\d{4})LT\s*:\s*ARRIVED AT DONGHAE/i);
-  if (m) { out.ata = m[1] + 'LT'; }
+
+  // ⭐ 동해 ATA - 날짜+시각 멀티라인 패턴
+  // "23RD MAY. 2026\n0500LT : ARRIVED AT DONGHAE"
+  m = text.match(/(\d{1,2})(?:ST|ND|RD|TH)?\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[\.\s,]*\d{0,4}[\s\S]{0,60}?(\d{4})LT\s*:\s*ARRIVED AT DONGHAE/i);
+  if (m) {
+    const dayMonth = `${m[1]}/${m[2].slice(0,3).toUpperCase()}`;
+    const dt = `${dayMonth} ${m[3]}LT`;
+    out.ata = dt;
+    out.cycle_s2_text = dt;
+    const iso = toISODate(m[2], m[1], m[3]);
+    if (iso) out.cycle_s2_iso = iso;
+    out.depPort = '동해';
+    out.status = 'BERTHED';
+  } else {
+    m = text.match(/(\d{4})LT\s*:\s*ARRIVED AT DONGHAE/i);
+    if (m) out.ata = m[1] + 'LT';
+  }
+
+  // 동해 접안 BERTH
   m = text.match(/ALL LINE MADE FAST.*?BERTH\s+NO\.\s*(\d+)/i);
   if (m) { out.atb = `BERTH ${m[1]}`; info['BERTH'] = `NO.${m[1]}`; }
-  m = text.match(/(\d{4})LT\s*:\s*ET COMP\.?\s*LD/i);
-  if (m) { out.atd = m[1] + 'LT'; info['적하 완료'] = m[1] + 'LT'; }
+
+  // ⭐ 동해 적하 완료 (ET COMP. LD) → cycle.s3 (동해 출항 시점)
+  m = text.match(/(\d{1,2})(?:ST|ND|RD|TH)?\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[\.\s,]*\d{0,4}[\s\S]{0,60}?(\d{4})LT\s*:\s*ET\s+COMP\.?\s*LD/i);
+  if (m) {
+    const dayMonth = `${m[1]}/${m[2].slice(0,3).toUpperCase()}`;
+    const dt = `${dayMonth} ${m[3]}LT`;
+    info['적하 완료'] = dt;
+    // 적하 완료 시각을 동해 출항 후보로 (실제 출항 시각이 별도 있으면 그게 우선)
+    out.cycle_s3_text = dt;
+    const iso = toISODate(m[2], m[1], m[3]);
+    if (iso) out.cycle_s3_iso = iso;
+  } else {
+    m = text.match(/(\d{4})LT\s*:\s*ET COMP\.?\s*LD/i);
+    if (m) { out.atd = m[1] + 'LT'; info['적하 완료'] = m[1] + 'LT'; }
+  }
+
+  // 적하 개시
+  m = text.match(/(\d{4})LT\s*:\s*ET\s+COMM\.?\s*LD/i);
+  if (m) info['적하 개시'] = m[1] + 'LT';
+
   m = text.match(/BL\s+Q['']?TY\s*:\s*([\d,]+)\s*MT/i);
   if (m) info['BL Q\'TY'] = m[1] + ' MT';
   m = text.match(/BALANCE\s*:\s*([\d,]+)\s*MT.*?TOTAL LD Q['']?TY\s*:\s*([\d,]+)\s*MT/i);
@@ -1768,6 +1895,19 @@ function parseGeneric(text, out, info) {
   if (m) { out.lat = m[1]; out.lon = m[2]; }
 }
 
+function mmddhhmmToISO(mmdd, hhmm) {
+  // "05/26", "1725" → "2026-05-26T17:25"
+  const parts = mmdd.split('/');
+  if (parts.length !== 2) return null;
+  const mm = String(parts[0]).padStart(2, '0');
+  const dd = String(parts[1]).padStart(2, '0');
+  const s = String(hhmm);
+  const hh = s.length >= 4 ? s.slice(0, 2) : '00';
+  const mi = s.length >= 4 ? s.slice(2, 4) : '00';
+  const yyyy = new Date().getFullYear();
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+
 function toISODate(monthName, day, hhmm) {
   const months = {'JAN':1,'FEB':2,'MAR':3,'APR':4,'MAY':5,'JUN':6,'JUL':7,'AUG':8,'SEP':9,'OCT':10,'NOV':11,'DEC':12,
                   '1월':1,'2월':2,'3월':3,'4월':4,'5월':5,'6월':6,'7월':7,'8월':8,'9월':9,'10월':10,'11월':11,'12월':12};
@@ -1802,7 +1942,12 @@ function showParsedResult(result) {
     eta: 'ETA', etaISO: 'ETA 정확시각', etb: 'ETB', etbISO: 'ETB 정확시각',
     etd: 'ETD', etdISO: 'ETD 정확시각',
     ata: 'ATA', atb: 'ATB', atd: 'ATD',
-    bunkerTime: '보고 시각', notes: 'REMARK / 메모'
+    depPort: '출발항', arrPort: '도착항',
+    bunkerTime: '보고 시각', notes: 'REMARK / 메모',
+    cycle_s1_text: '🔄 항차① 당진 출항(ETD)', cycle_s1_iso: '🔄 항차① 정확시각',
+    cycle_s2_text: '🔄 항차② 동해 입항(ATA)', cycle_s2_iso: '🔄 항차② 정확시각',
+    cycle_s3_text: '🔄 항차③ 동해 출항(ATD)', cycle_s3_iso: '🔄 항차③ 정확시각',
+    cycle_s4_text: '🔄 항차④ 당진 양하·출항(ETD)', cycle_s4_iso: '🔄 항차④ 정확시각'
   };
   let html = `<div style="padding:10px;background:#e8f5e9;border:1px solid #81c784;border-radius:6px;font-size:13px;">
     ✅ 인식된 패턴: <strong>${escapeHtml(result.source)}</strong><br>
@@ -1833,9 +1978,25 @@ function applyParsed() {
   const f = parsedData.extracted;
   let applied = [];
   for (const k of Object.keys(f)) {
+    if (k.startsWith('_cargo_done')) {
+      // 양하 진행도 자동 반영
+      data.cargo_discharging = data.cargo_discharging || { type: '석회석', total: 30000, done: 0, started: '', rate: null };
+      data.cargo_discharging.done = f[k];
+      data.cargoView = 'DISCHARGING';
+      applied.push('양하 진행도');
+      continue;
+    }
     if (k.startsWith('_')) continue;
-    data[k] = f[k];
-    applied.push(k);
+    // cycle 관련 필드는 data.cycle에 매핑
+    if (k.startsWith('cycle_')) {
+      const cycleKey = k.replace('cycle_', '');
+      data.cycle = data.cycle || {};
+      data.cycle[cycleKey] = f[k];
+      applied.push(`사이클.${cycleKey}`);
+    } else {
+      data[k] = f[k];
+      applied.push(k);
+    }
   }
   saveStorage();
   closeMailModal();
